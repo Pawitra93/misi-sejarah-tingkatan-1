@@ -1,21 +1,3531 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ms">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Misi Sejarah: The Lost Civilization</title>
-    <meta name="description" content="Permainan pengembaraan 3D pendidikan Sejarah Tingkatan 1 Bab 1: Terokai Ilmu Sejarah dengan kampung purba, 8 portal misi, peta pulau misteri, dan panduan sejarah interaktif." />
-    <meta property="og:title" content="Misi Sejarah: The Lost Civilization" />
-    <meta property="og:description" content="Permainan pengembaraan 3D pendidikan Sejarah Tingkatan 1 Bab 1: Terokai Ilmu Sejarah dengan kampung purba, 8 portal misi, peta pulau misteri, dan panduan sejarah interaktif." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  </head>
-  <body class="overflow-hidden select-none bg-[#0c1a2e]">
-    <div id="root"></div>
-    <script type="module" src="/main.tsx"></script>
-  </body>
-</html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MISI SEJARAH: THE LOST CIVILIZATION | Sejarah Tingkatan 1 Bab 1</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js r128 for 3D Roblox-inspired Adventure World -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Tone.js for Procedural Sound Effects & Adventure Music -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <!-- Google Fonts: Fredoka (Adventure Game UI) & Nunito (Clean Readable Malay Text) -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 
+  <style>
+    :root {
+      --font-display: 'Fredoka', sans-serif;
+      --font-body: 'Nunito', sans-serif;
+    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    body, html {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: var(--font-body);
+      background: #0f172a;
+      color: #f8fafc;
+      touch-action: none;
+    }
+    h1, h2, h3, .font-game { font-family: var(--font-display); }
+
+    #game-canvas-container {
+      position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* Glossy 3D Adventure Game Buttons */
+    .btn-game {
+      font-family: var(--font-display);
+      font-weight: 700;
+      border-radius: 16px;
+      border-bottom: 5px solid rgba(0,0,0,0.3);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.35), inset 0 2px 2px rgba(255,255,255,0.4);
+      transition: transform 0.1s ease, filter 0.15s ease, border-bottom-width 0.1s ease;
+      cursor: pointer;
+    }
+    .btn-game:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .btn-game:active { transform: translateY(3px); border-bottom-width: 2px; }
+
+    .btn-gold { background: linear-gradient(180deg, #fde047 0%, #eab308 100%); color: #422006; border-bottom-color: #a16207; }
+    .btn-emerald { background: linear-gradient(180deg, #34d399 0%, #059669 100%); color: #ffffff; border-bottom-color: #065f46; }
+    .btn-sky { background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); color: #ffffff; border-bottom-color: #075985; }
+    .btn-purple { background: linear-gradient(180deg, #c084fc 0%, #7e22ce 100%); color: #ffffff; border-bottom-color: #581c87; }
+    .btn-rose { background: linear-gradient(180deg, #fb7185 0%, #e11d48 100%); color: #ffffff; border-bottom-color: #9f1239; }
+    .btn-slate { background: linear-gradient(180deg, #64748b 0%, #334155 100%); color: #ffffff; border-bottom-color: #1e293b; }
+
+    /* Glass Panels */
+    .game-panel {
+      background: rgba(15, 23, 42, 0.86);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+      border-radius: 24px;
+    }
+
+    /* Scrollbar styling inside modals */
+    .custom-scroll { overflow-y: auto; touch-action: pan-y; }
+    .custom-scroll::-webkit-scrollbar { width: 8px; }
+    .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 8px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(250,204,21,0.5); border-radius: 8px; }
+
+    /* Mobile Virtual Joystick */
+    #joystick-zone {
+      position: relative; width: 124px; height: 124px;
+      border-radius: 9999px;
+      background: rgba(15, 23, 42, 0.45);
+      border: 3px solid rgba(255, 255, 255, 0.35);
+      touch-action: none;
+    }
+    #joystick-knob {
+      position: absolute; top: 50%; left: 50%;
+      width: 52px; height: 52px; margin-left: -26px; margin-top: -26px;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 35% 35%, #fef08a, #eab308);
+      border: 3px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    /* Animations */
+    @keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes popIn { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 12px rgba(250,204,21,0.6); } 50% { box-shadow: 0 0 28px rgba(250,204,21,1); } }
+    .animate-float { animation: floatY 2.4s ease-in-out infinite; }
+    .animate-pop { animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-glow { animation: pulseGlow 1.8s infinite; }
+
+    /* Draggable & Selectable Cards */
+    .drag-card {
+      cursor: grab;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .drag-card:active { cursor: grabbing; transform: scale(0.97); }
+    .drop-zone {
+      border: 2px dashed rgba(255,255,255,0.35);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .drop-zone.drag-over {
+      background: rgba(250, 204, 21, 0.18);
+      border-color: #fde047;
+    }
+
+    /* Confetti canvas overlay */
+    #confetti-canvas {
+      position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    }
+
+    input, select, textarea { user-select: text; -webkit-user-select: text; }
+  </style>
+</head>
+<body>
+
+  <!-- 3D World Canvas -->
+  <div id="game-canvas-container"></div>
+  <!-- Confetti Overlay -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center pointer-events-none w-[92%] max-w-md"></div>
+
+  <!-- ===================================================================== -->
+  <!-- SCREEN 1: TITLE & 3D BLOCKY AVATAR CREATOR                             -->
+  <!-- ===================================================================== -->
+  <div id="screen-creator" class="fixed inset-0 z-30 flex flex-col justify-between p-3 sm:p-5 pointer-events-none">
+    <!-- Top Title Header -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pointer-events-auto">
+      <div class="game-panel px-4 py-2.5 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 flex items-center justify-center text-2xl shadow-lg">🏛️</div>
+        <div>
+          <h1 class="text-lg sm:text-2xl font-bold tracking-wide text-amber-300 leading-tight">MISI SEJARAH: THE LOST CIVILIZATION</h1>
+          <p class="text-xs sm:text-sm text-sky-200 font-bold">Jelajah Dunia, Kumpul Ilmu, Takluk Sejarah! • Tingkatan 1 Bab 1</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="SoundFX.toggleMute()" id="creator-mute-btn" class="btn-game btn-slate px-3 py-2 text-sm">🔊 Bunyi</button>
+        <button onclick="UI.openTeacherPanel()" class="btn-game btn-purple px-3.5 py-2 text-sm">👩‍🏫 Panel Guru</button>
+      </div>
+    </div>
+
+    <!-- Middle Layout: Left Controls (Avatar Customisation), Center Open for 3D Avatar, Right Emotes & Saved Profiles -->
+    <div class="flex-1 flex flex-col md:flex-row items-center md:items-stretch justify-between gap-3 my-3 overflow-hidden">
+      <!-- Left: Customisation Panel -->
+      <div class="game-panel p-4 w-full md:w-80 lg:w-96 flex flex-col gap-3 pointer-events-auto custom-scroll max-h-[54vh] md:max-h-full">
+        <div class="flex items-center justify-between border-b border-white/15 pb-2">
+          <h2 class="text-lg font-bold text-amber-300">✨ Cipta Avatar Pengembara</h2>
+          <button onclick="Creator.randomize()" class="text-xs bg-white/15 hover:bg-white/25 px-2.5 py-1 rounded-lg font-bold">🎲 Rawak</button>
+        </div>
+
+        <!-- Player Name -->
+        <div>
+          <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Nama Pengembara</label>
+          <input id="input-player-name" type="text" maxlength="20" placeholder="Contoh: Aiman / Siti"
+            class="w-full mt-1 px-3 py-2 rounded-xl bg-slate-800/90 border-2 border-slate-600 focus:border-amber-400 outline-none text-white font-bold text-sm" />
+        </div>
+
+        <!-- Saved Students Quick Load -->
+        <div id="saved-profiles-box" class="hidden">
+          <label class="text-xs font-bold text-emerald-300 uppercase tracking-wider">Sambung Profil Tersimpan</label>
+          <select id="select-saved-profile" onchange="Creator.loadSelectedProfile(this.value)"
+            class="w-full mt-1 px-3 py-2 rounded-xl bg-slate-800/90 border-2 border-emerald-500/60 text-white font-bold text-sm outline-none">
+          </select>
+        </div>
+
+        <!-- Skin Tone -->
+        <div>
+          <label class="text-xs font-bold text-slate-300">Warna Kulit</label>
+          <div id="opt-skin" class="flex flex-wrap gap-2 mt-1"></div>
+        </div>
+
+        <!-- Hair Style & Color -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-bold text-slate-300">Gaya Rambut</label>
+            <select id="opt-hairStyle" onchange="Creator.updateAvatar()" class="w-full mt-1 px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-600 text-xs font-bold">
+              <option value="spiky">Spiky Pengembara</option>
+              <option value="bob">Bob Klasik</option>
+              <option value="bun">Sanggul Kemas</option>
+              <option value="mohawk">Mohawk Hebat</option>
+              <option value="curly">Kerinting Ceria</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-300">Warna Rambut</label>
+            <div id="opt-hairColor" class="flex flex-wrap gap-1.5 mt-1"></div>
+          </div>
+        </div>
+
+        <!-- Clothes & Shoes -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-bold text-slate-300">Warna Baju</label>
+            <div id="opt-shirtColor" class="flex flex-wrap gap-1.5 mt-1"></div>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-300">Warna Seluar & Kasut</label>
+            <div id="opt-pantsColor" class="flex flex-wrap gap-1.5 mt-1"></div>
+          </div>
+        </div>
+
+        <!-- Explorer Hat, Glasses, Backpack -->
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="text-xs font-bold text-slate-300">Topi</label>
+            <select id="opt-hat" onchange="Creator.updateAvatar()" class="w-full mt-1 px-2 py-1.5 rounded-xl bg-slate-800 border border-slate-600 text-xs font-bold">
+              <option value="explorer">Topi Safari</option>
+              <option value="cap">Topi Besbol</option>
+              <option value="wizard">Topi Ilmu</option>
+              <option value="none">Tiada</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-300">Cermin Mata</label>
+            <select id="opt-glasses" onchange="Creator.updateAvatar()" class="w-full mt-1 px-2 py-1.5 rounded-xl bg-slate-800 border border-slate-600 text-xs font-bold">
+              <option value="none">Tiada</option>
+              <option value="round">Bulat</option>
+              <option value="cool">Gaya Siber</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-300">Beg Galas</label>
+            <select id="opt-backpack" onchange="Creator.updateAvatar()" class="w-full mt-1 px-2 py-1.5 rounded-xl bg-slate-800 border border-slate-600 text-xs font-bold">
+              <option value="explorer">Beg Kembara</option>
+              <option value="scroll">Beg Skrol</option>
+              <option value="none">Tiada</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Animation Preview & Story Intro -->
+      <div class="hidden md:flex flex-col justify-between gap-3 w-72 pointer-events-auto">
+        <div class="game-panel p-4">
+          <h3 class="text-sm font-bold text-amber-300 mb-2">🎭 Uji Animasi Avatar</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="Creator.previewAnim('walk')" class="btn-game btn-sky py-1.5 text-xs">🚶 Jalan</button>
+            <button onclick="Creator.previewAnim('run')" class="btn-game btn-sky py-1.5 text-xs">🏃 Lari</button>
+            <button onclick="Creator.previewAnim('jump')" class="btn-game btn-emerald py-1.5 text-xs">⬆️ Lompat</button>
+            <button onclick="Creator.previewAnim('dance')" class="btn-game btn-purple py-1.5 text-xs">💃 Menari</button>
+            <button onclick="Creator.previewAnim('celebrate')" class="btn-game btn-gold py-1.5 text-xs col-span-2">🏆 Gaya Kemenangan</button>
+          </div>
+        </div>
+
+        <div class="game-panel p-4 text-xs leading-relaxed text-slate-200">
+          <div class="text-amber-300 font-bold text-sm mb-1">📜 Kisah Pengembaraan</div>
+          Dunia purba sejarah telah kehilangan <b>6 Kristal Ilmu Suci</b> merentasi 6 era utama <b>Sejarah Tingkatan 1</b>! Sebagai Pengembara Sejarah muda, jelajahi 6 dunia misteri, selesaikan cabaran, tewaskan Penjaga Ilmu dan buka <b>Harta Karun Sejarah Lagenda</b>!
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Start CTA -->
+    <div class="flex justify-center pointer-events-auto pb-1">
+      <button onclick="Creator.startAdventure()" class="btn-game btn-gold px-8 py-3.5 text-lg sm:text-xl animate-glow flex items-center gap-2">
+        🚀 MULA PENGEMBARAAN 3D!
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- SCREEN 2: IN-GAME 3D ADVENTURE HUD & MOBILE TOUCH CONTROLS            -->
+  <!-- ===================================================================== -->
+  <div id="hud" class="hidden fixed inset-0 z-20 flex flex-col justify-between p-2.5 sm:p-4 pointer-events-none">
+    <!-- Top HUD Bar -->
+    <div class="flex flex-wrap items-start justify-between gap-2">
+      <!-- Player Profile & Stats -->
+      <div class="game-panel px-3.5 py-2 flex items-center gap-3 pointer-events-auto">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-lg shadow">🧭</div>
+        <div>
+          <div id="hud-player-name" class="font-game text-sm sm:text-base font-bold text-amber-300 leading-tight">Pengembara</div>
+          <div class="flex items-center gap-2.5 text-xs font-extrabold mt-0.5">
+            <span class="text-amber-200">⭐ <span id="hud-score">0</span></span>
+            <span class="text-yellow-300">🪙 <span id="hud-coins">0</span></span>
+            <span class="text-cyan-300">💎 <span id="hud-crystals">0</span>/6</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current World & Mission Objective (Desktop/Tablet) -->
+      <div class="hidden md:flex flex-col items-center game-panel px-5 py-2 max-w-lg text-center pointer-events-auto">
+        <div id="hud-world-title" class="font-game text-sm lg:text-base font-bold text-amber-300">🏡 Desa Sejarah Purba (Hab Utama)</div>
+        <div id="hud-objective" class="text-xs text-slate-200 font-bold mt-0.5">Masuki mana-mana 6 portal dunia atau tekan Peta Dunia!</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 pointer-events-auto">
+        <button id="hud-notes-btn" onclick="UI.openCurrentNotes()" class="hidden btn-game btn-gold px-3 py-2 text-xs sm:text-sm">📖 Nota</button>
+        <button id="hud-hub-btn" onclick="WorldManager.enterHub()" class="hidden btn-game btn-emerald px-3 py-2 text-xs sm:text-sm">🏡 Hab</button>
+        <button onclick="UI.openWorldMap()" class="btn-game btn-sky px-3 py-2 text-xs sm:text-sm">🗺️ Peta</button>
+        <button onclick="UI.openInventory()" class="btn-game btn-purple px-3 py-2 text-xs sm:text-sm">🎒 Beg</button>
+        <button id="hud-mute-btn" onclick="SoundFX.toggleMute()" class="btn-game btn-slate px-2.5 py-2 text-xs sm:text-sm">🔊</button>
+        <button onclick="UI.openPauseMenu()" class="btn-game btn-slate px-2.5 py-2 text-xs sm:text-sm">⚙️</button>
+      </div>
+    </div>
+
+    <!-- Mobile World Title & Objective Strip -->
+    <div class="md:hidden game-panel px-3.5 py-2 text-center pointer-events-auto mt-1">
+      <div id="hud-world-title-mob" class="font-game text-xs font-bold text-amber-300">🏡 Desa Sejarah Purba (Hab Utama)</div>
+      <div id="hud-objective-mob" class="text-[11px] text-slate-200 font-bold">Masuki mana-mana 6 portal dunia atau tekan Peta Dunia!</div>
+    </div>
+
+    <!-- Center Proximity Interaction Prompt -->
+    <div class="flex-1 flex items-end justify-center pb-4">
+      <button id="interact-prompt" onclick="Engine3D.triggerInteract()"
+        class="hidden pointer-events-auto btn-game btn-gold px-5 py-3 text-sm sm:text-base flex items-center gap-2.5 animate-bounce shadow-2xl">
+        <span id="interact-prompt-icon" class="text-xl">💬</span>
+        <span id="interact-prompt-text">Berinteraksi [F]</span>
+      </button>
+    </div>
+
+    <!-- Bottom Touch & Keyboard Controls Bar -->
+    <div class="flex items-end justify-between gap-3">
+      <!-- Virtual Joystick (Touch & Mouse) -->
+      <div class="pointer-events-auto flex flex-col items-center gap-1">
+        <div id="joystick-zone">
+          <div id="joystick-knob"></div>
+        </div>
+        <span class="hidden sm:inline text-[11px] font-bold text-white/75 bg-slate-900/60 px-2.5 py-0.5 rounded-full">WASD / Anak Panah • Seret Skrin Putar Kamera</span>
+      </div>
+
+      <!-- Right Action Controls: Emote, Interact, Jump -->
+      <div class="flex items-end gap-2 sm:gap-3 pointer-events-auto">
+        <button onclick="Engine3D.triggerEmote('dance')" title="Menari [E]"
+          class="btn-game btn-purple w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex flex-col items-center justify-center text-lg">
+          <span>💃</span>
+          <span class="text-[9px] font-extrabold">TARI</span>
+        </button>
+        <button onclick="Engine3D.triggerInteract()" title="Interaksi [F]"
+          class="btn-game btn-sky w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex flex-col items-center justify-center text-xl">
+          <span>🖐️</span>
+          <span class="text-[10px] font-extrabold">AKSI</span>
+        </button>
+        <button onclick="Engine3D.triggerJump()" title="Lompat [Space]"
+          class="btn-game btn-emerald w-16 h-16 sm:w-20 sm:h-20 rounded-full flex flex-col items-center justify-center text-2xl">
+          <span>⬆️</span>
+          <span class="text-[10px] font-extrabold">LOMPAT</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Container -->
+  <div id="modal-backdrop" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-5">
+    <div id="modal-box" class="game-panel w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-pop">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-white/15 bg-slate-900/70">
+        <h2 id="modal-title" class="text-lg sm:text-xl font-bold text-amber-300 flex items-center gap-2">Tajuk</h2>
+        <button onclick="UI.closeModal()" id="modal-close-btn" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-rose-500/80 flex items-center justify-center font-bold text-white transition">✕</button>
+      </div>
+      <!-- Modal Body -->
+      <div id="modal-body" class="p-4 sm:p-6 custom-scroll flex-1"></div>
+    </div>
+  </div>
+
+<script>
+/* ============================================================================
+ * 1. PROCEDURAL SOUND EFFECTS ENGINE (TONE.JS)
+ * ============================================================================ */
+const SoundFX = {
+  muted: false,
+  initialized: false,
+  synth: null,
+
+  async init() {
+    if (this.initialized) return;
+    try {
+      if (typeof Tone !== 'undefined') {
+        await Tone.start();
+        this.synth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 0.01, decay: 0.12, sustain: 0.1, release: 0.25 }
+        }).toDestination();
+        this.synth.volume.value = -8;
+        this.initialized = true;
+      }
+    } catch (e) {
+      // Fail gracefully if audio context is blocked
+    }
+  },
+
+  toggleMute() {
+    this.muted = !this.muted;
+    const creatorBtn = document.getElementById('creator-mute-btn');
+    const hudBtn = document.getElementById('hud-mute-btn');
+    if (creatorBtn) creatorBtn.textContent = this.muted ? '🔇 Senyap' : '🔊 Bunyi';
+    if (hudBtn) hudBtn.textContent = this.muted ? '🔇' : '🔊';
+    if (!this.muted) {
+      this.init();
+      this.play('coin');
+    }
+  },
+
+  play(type) {
+    if (this.muted) return;
+    try {
+      if (!this.initialized) this.init();
+      if (!this.synth || typeof Tone === 'undefined') return;
+      const now = Tone.now();
+      switch (type) {
+        case 'jump':
+          this.synth.triggerAttackRelease('C4', '16n', now);
+          this.synth.triggerAttackRelease('G4', '16n', now + 0.06);
+          break;
+        case 'coin':
+          this.synth.triggerAttackRelease('B5', '16n', now);
+          this.synth.triggerAttackRelease('E6', '8n', now + 0.07);
+          break;
+        case 'hit':
+          this.synth.triggerAttackRelease('G4', '32n', now);
+          break;
+        case 'chest':
+          this.synth.triggerAttackRelease(['C5', 'E5', 'G5'], '8n', now);
+          this.synth.triggerAttackRelease(['C6'], '4n', now + 0.14);
+          break;
+        case 'correct':
+          this.synth.triggerAttackRelease('E5', '16n', now);
+          this.synth.triggerAttackRelease('A5', '8n', now + 0.08);
+          break;
+        case 'wrong':
+          this.synth.triggerAttackRelease('Eb3', '8n', now);
+          this.synth.triggerAttackRelease('C3', '4n', now + 0.1);
+          break;
+        case 'victory':
+          this.synth.triggerAttackRelease('C5', '16n', now);
+          this.synth.triggerAttackRelease('E5', '16n', now + 0.1);
+          this.synth.triggerAttackRelease('G5', '16n', now + 0.2);
+          this.synth.triggerAttackRelease(['C6', 'E6', 'G6'], '2n', now + 0.3);
+          break;
+        default:
+          this.synth.triggerAttackRelease('C5', '16n', now);
+      }
+    } catch (e) {
+      // Ignore audio timing errors during rapid triggers
+    }
+  }
+};
+
+/* ============================================================================
+ * 2. CURRICULUM DATA: SEJARAH TINGKATAN 1 KSSM 2026 (6 DUNIA UTAMA)
+ * ============================================================================ */
+const WORLDS_DATA = [
+  {
+    id: 1,
+    slug: 'terokai-ilmu-sejarah',
+    name: 'Terokai Ilmu Sejarah',
+    topic: 'Bab 1: Terokai Ilmu Sejarah',
+    icon: '📚',
+    crystalName: 'Kristal Ilmu Sejarah',
+    crystalColor: 0x38bdf8,
+    hex: '#38bdf8',
+    skyColor: 0x1e1b4b,
+    groundColor: 0x312e81,
+    theme: 'library',
+    shortNote: `
+      <ul class="space-y-1.5 text-sm text-slate-200">
+        <li>🇬🇷 <b>Maksud Sejarah:</b> Yunani (<i>Historia</i> = penyelidikan), Inggeris (<i>History</i> = peristiwa lampau), Bahasa Melayu/Arab (<i><b>Syajaratun</b></i> = pokok, salasilah, riwayat, keturunan & asal usul).</li>
+        <li>🏛️ <b>Pandangan Sejarawan:</b> <b>Herodotus</b> (sebab berlaku peristiwa), <b>E.H. Carr</b> (perbincangan masa ini dengan masa lampau), <b>Ibn Khaldun</b> (perubahan sifat masyarakat), <b>Muhd. Yusof Ibrahim</b> (kejadian telah berlaku), <b>Khoo Kay Kim</b> (keseluruhan masa lepas & objektif).</li>
+        <li>⏳ <b>Ruang & Masa:</b> Ruang (tempat berlaku), Masa (waktu berlaku: Dekad 10 thn, Abad 100 thn, Alaf 1000 thn, Kronologi).</li>
+        <li>🔎 <b>Sumber & Kaedah:</b> <b>Sumber Primer</b> (asli, belum diolah/ditafsir) vs <b>Sumber Sekunder</b> (telah diolah & diterbitkan). Kaedah: <b>Kepustakaan</b>, <b>Lisan</b> & <b>Arkeologi</b> (ekskavasi).</li>
+      </ul>`,
+    collectibleName: 'Skrol Ilmu Sejarah',
+    collectibleCount: 3,
+    npcName: 'Pustakawan Al-Hikmah',
+    npcGreeting: 'Selamat datang ke Dunia 1: Terokai Ilmu Sejarah! Bercakap dengan 5 Tokoh Sejarawan, kumpul 3 Skrol Ilmu di platform, selesaikan padanan & tewaskan Penjaga Pustaka!',
+    miniGameType: 'wordMatch',
+    miniGameData: {
+      title: '📚 Cabaran Terokai Ilmu Sejarah',
+      instruction: 'Padankan setiap konsep asas Ilmu Sejarah dengan huraian buku teks yang tepat!',
+      pairs: [
+        { left: 'Bahasa Yunani (Historia) & Arab (Syajaratun)', right: 'Penyelidikan & pokok / salasilah / asal usul' },
+        { left: 'Sumber Primer vs Sumber Sekunder', right: 'Bahan asli belum diolah vs bahan telah diolah & diterbitkan' },
+        { left: 'Kaedah Kepustakaan, Lisan & Arkeologi', right: 'Analisis bahan bertulis, temu bual orang sumber & ekskavasi' },
+        { left: 'Pentafsiran Sejarah & Sebab-Akibat', right: 'Mengulas peristiwa berdasarkan sumber serta faktor & kesan' }
+      ],
+      puzzleWord: 'SYAJARATUN',
+      puzzleClue: 'Perkataan Bahasa Arab yang dikaitkan dengan istilah Sejarah dalam Bahasa Melayu:'
+    },
+    bossName: 'Golem Pustaka Purba',
+    bossQuestions: [
+      {
+        q: 'Apakah maksud perkataan "Historia" dalam Bahasa Yunani dan "Syajaratun" dalam Bahasa Arab?',
+        options: ['Penyelidikan dan pokok/salasilah', 'Masa hadapan dan peta', 'Cerita dongeng dan lagu', 'Peperangan dan senjata'],
+        ans: 0,
+        hint: 'Historia bermaksud penyelidikan, manakala Syajaratun merujuk kepada pokok atau asal usul.',
+        explain: 'Historia (Yunani) bermaksud penyelidikan, manakala Syajaratun (Arab) bermaksud pokok, salasilah, riwayat dan asal usul.'
+      },
+      {
+        q: 'Siapakah tokoh sejarawan yang menyatakan sejarah ialah proses perbincangan antara masa ini dengan masa lampau?',
+        options: ['Herodotus', 'E.H. Carr', 'Ibn Khaldun', 'Khoo Kay Kim'],
+        ans: 1,
+        hint: 'Beliau merupakan sejarawan barat terkenal (Edward Hallett Carr).',
+        explain: 'E.H. Carr mentakrifkan sejarah sebagai proses interaksi atau perbincangan antara masa kini dengan masa lampau.'
+      },
+      {
+        q: 'Antara berikut, yang manakah menerangkan ciri Sumber Primer dan Kaedah Arkeologi dengan tepat?',
+        options: ['Telah dicetak di akhbar & temu bual tokoh', 'Bersifat asli belum diolah & kajian saintifik melalui ekskavasi', 'Buku teks sekolah & pembacaan di arkib', 'Cerita rekaan & lukisan moden'],
+        ans: 1,
+        hint: 'Sumber primer bersifat asli, manakala arkeologi melibatkan penggalian (ekskavasi).',
+        explain: 'Sumber primer bersifat asli dan belum diolah, manakala Kaedah Arkeologi dijalankan melalui proses ekskavasi tinggalan fizikal.'
+      }
+    ]
+  },
+  {
+    id: 2,
+    slug: 'evolusi-dunia',
+    name: 'Evolusi Dunia',
+    topic: 'Bab 2: Evolusi Dunia & Zaman Air Batu',
+    icon: '🧊',
+    crystalName: 'Kristal Glasier',
+    crystalColor: 0x06b6d4,
+    hex: '#06b6d4',
+    skyColor: 0x0c4a6e,
+    groundColor: 0xe0f2fe,
+    theme: 'iceage',
+    shortNote: `
+      <ul class="space-y-1.5 text-sm text-slate-200">
+        <li>🌍 <b>Dunia Kita:</b> Usia bumi melebihi <b>4.6 bilion tahun</b>. Terdiri daripada 7 benua (Asia, Afrika, Amerika Utara, Amerika Selatan, Antartika, Eropah, Oceania) dan 5 lautan utama.</li>
+        <li>❄️ <b>Zaman Air Batu:</b> Garis masa geologi apabila suhu bumi menurun dan berlaku proses <b>pengglasieran</b> (pembekuan air laut menjadi glasier).</li>
+        <li>⏳ <b>4 Tahap Zaman Air Batu:</b>
+          <br>1) <b>Zaman Miosen</b> (23 juta – 5 juta thn dahulu): Gunung-ganang terbentuk secara fizikal.
+          <br>2) <b>Zaman Pliosen</b> (5.3 juta – 2.6 juta thn dahulu): Penyejukan global & jambatan darat Panama terbentuk.
+          <br>3) <b>Zaman Pleistosen</b> (2.5 juta – 11,700 thn dahulu): Glasier utama berlaku, manusia mula membuat api, wujud mamot berbulu.
+          <br>4) <b>Zaman Holosen</b> (11,700 thn dahulu hingga kini): Suhu meningkat, air batu mencair, manusia menjalankan pertanian.</li>
+        <li>🌊 <b>Kesan di Asia Tenggara:</b> Pencairan air batu menaikkan paras air laut dan menenggelamkan <b>Pentas Sunda</b> lalu membentuk Kepulauan Melayu.</li>
+      </ul>`,
+    collectibleName: 'Kristal Glasier',
+    collectibleCount: 3,
+    npcName: 'Dr. Geologi Iskandar',
+    npcGreeting: 'Selamat datang ke Dunia 2: Evolusi Dunia! Kumpul 3 Kristal Glasier di bongkah ais, susun 4 tahap Zaman Air Batu mengikut garis masa dan tewaskan Golem Ais!',
+    miniGameType: 'timeline',
+    miniGameData: {
+      title: '🧊 Garis Masa 4 Tahap Zaman Air Batu',
+      instruction: 'Susun 4 tahap Zaman Air Batu mengikut urutan masa geologi dari yang paling awal hingga kini!',
+      events: [
+        { year: '23 Juta - 5 Juta Thn', text: 'Zaman Miosen — Gunung-ganang terbentuk secara fizikal & mamalia wujud', order: 1 },
+        { year: '5.3 Juta - 2.6 Juta Thn', text: 'Zaman Pliosen — Penyejukan global & jambatan darat Panama terbentuk', order: 2 },
+        { year: '2.5 Juta - 11,700 Thn', text: 'Zaman Pleistosen — Glasier utama berlaku & manusia tahu membuat api', order: 3 },
+        { year: '11,700 Thn - Kini', text: 'Zaman Holosen — Air batu mencair, Pentas Sunda tenggelam & pertanian bermula', order: 4 }
+      ]
+    },
+    bossName: 'Golem Ais Pleistosen',
+    bossQuestions: [
+      {
+        q: 'Apakah yang berlaku semasa proses pengglasieran pada Zaman Air Batu?',
+        options: ['Suhu bumi menurun dan air laut membeku menjadi glasier', 'Semua gunung berapi meletus serentak', 'Air laut menjadi sangat panas', 'Hutan hujan meliputi seluruh kutub'],
+        ans: 0,
+        hint: 'Glasier merujuk kepada lapisan ais besar akibat suhu dingin.',
+        explain: 'Pengglasieran berlaku apabila suhu bumi menurun dengan mendadak sehingga menyebabkan air laut membeku.'
+      },
+      {
+        q: 'Pada tahap Zaman Air Batu manakah manusia mula mengetahui cara membuat api dan haiwan mamot berbulu wujud?',
+        options: ['Zaman Miosen', 'Zaman Pliosen', 'Zaman Pleistosen', 'Zaman Holosen'],
+        ans: 2,
+        hint: 'Berlaku antara 2.5 juta hingga 11,700 tahun dahulu.',
+        explain: 'Pada Zaman Pleistosen, glasier utama berlaku dan manusia mula mengetahui cara membuat api.'
+      },
+      {
+        q: 'Apakah kesan kenaikan paras air laut akibat pencairan air batu pada Zaman Holosen di Asia Tenggara?',
+        options: ['Pentas Sunda tenggelam dan membentuk Kepulauan Melayu', 'Laut China Selatan menjadi kering kontang', 'Semua pulau bercantum menjadi satu benua', 'Suhu menurun ke paras beku semula'],
+        ans: 0,
+        hint: 'Kawasan daratan luas Pentas Sunda ditenggelami air laut.',
+        explain: 'Pencairan air batu menaikkan paras air laut sehingga menenggelamkan Pentas Sunda dan membentuk Kepulauan Melayu.'
+      }
+    ]
+  },
+  {
+    id: 3,
+    slug: 'kenali-zaman-prasejarah',
+    name: 'Kenali Zaman Prasejarah',
+    topic: 'Bab 3: Kenali Zaman Prasejarah',
+    icon: '🪨',
+    crystalName: 'Kristal Nirleka',
+    crystalColor: 0xf97316,
+    hex: '#f97316',
+    skyColor: 0x431407,
+    groundColor: 0x78350f,
+    theme: 'prehistoric',
+    shortNote: `
+      <ul class="space-y-1.5 text-sm text-slate-200">
+        <li>🦴 <b>Maksud Zaman Prasejarah (Nirleka):</b> Zaman sebelum manusia mengetahui dan mengenal tulisan (<i>Nir</i> = tidak ada, <i>Leka</i> = tulisan).</li>
+        <li>🪓 <b>Zaman Paleolitik (Zaman Batu Lama):</b> Hidup berpindah-randah (nomad) di dalam gua, menggunakan peralatan batu ringkas, memburu & memungut hasil hutan.</li>
+        <li>🐟 <b>Zaman Mesolitik (Zaman Batu Pertengahan / Hoabinhian):</b> Tinggal di gua serta pinggir sungai/laut, alatan batu lebih halus, memburu & menangkap ikan.</li>
+        <li>🌾 <b>Zaman Neolitik (Zaman Batu Baru):</b> Hidup <b>menetap</b>, <b>bercucuk tanam</b>, <b>menternak binatang</b>, membuat tembikar, sistem barter & ada pemimpin.</li>
+        <li>⚔️ <b>Zaman Logam:</b> Inovasi peralatan <b>gangsa dan besi</b> (kapak, tulang mawas, beliung), aktiviti pelayaran & perdagangan tukar barang. Tapak Malaysia: <b>Lenggong (Perak Man)</b>, <b>Gua Niah</b>, <b>Gua Cha</b>, <b>Bukit Tengkorak</b>.</li>
+      </ul>`,
+    collectibleName: 'Artifak Batu & Logam',
+    collectibleCount: 3,
+    npcName: 'Ketua Suku Prasejarah',
+    npcGreeting: 'Selamat datang ke Dunia 3: Kenali Zaman Prasejarah! Kumpul 3 Artifak Batu & Logam, kelaskan ciri Zaman Paleolitik, Neolitik & Logam dan cabar Penjaga Gua!',
+    miniGameType: 'dragClassify',
+    miniGameData: {
+      title: '🪨 Pengelasan Ciri Zaman Prasejarah',
+      instruction: 'Seret (atau klik) setiap aktiviti manusia ke dalam Zaman Paleolitik, Zaman Neolitik atau Zaman Logam!',
+      categories: [
+        { id: 'paleolitik', label: '🦴 Zaman Paleolitik' },
+        { id: 'neolitik', label: '🌾 Zaman Neolitik' },
+        { id: 'logam', label: '⚔️ Zaman Logam' }
+      ],
+      items: [
+        { text: 'Hidup berpindah-randah (nomad) di gua & alatan batu ringkas', cat: 'paleolitik' },
+        { text: 'Memburu binatang & memungut hasil hutan sebagai sumber makanan', cat: 'paleolitik' },
+        { text: 'Hidup menetap, bercucuk tanam & menternak binatang', cat: 'neolitik' },
+        { text: 'Membuat tembikar tanah liat & wujud sistem barter', cat: 'neolitik' },
+        { text: 'Mencipta peralatan gangsa dan besi seperti tulang mawas & beliung', cat: 'logam' },
+        { text: 'Menjalankan aktiviti pelayaran & perdagangan jarak jauh', cat: 'logam' }
+      ]
+    },
+    bossName: 'Penjaga Gua Nirleka',
+    bossQuestions: [
+      {
+        q: 'Apakah maksud istilah "Nirleka" yang dikaitkan dengan Zaman Prasejarah?',
+        options: ['Zaman sebelum manusia mengenal tulisan', 'Zaman penciptaan komputer', 'Zaman pemerintahan raja moden', 'Zaman penerokaan angkasa'],
+        ans: 0,
+        hint: 'Nir bermaksud tidak ada, manakala Leka bermaksud tulisan.',
+        explain: 'Zaman Prasejarah dikenali sebagai Nirleka, iaitu zaman sebelum manusia mengetahui dan mengenal tulisan.'
+      },
+      {
+        q: 'Perubahan besar cara hidup manusia daripada nomad kepada hidup menetap, bercucuk tanam dan menternak binatang berlaku pada...',
+        options: ['Zaman Paleolitik', 'Zaman Mesolitik', 'Zaman Neolitik', 'Zaman Air Batu'],
+        ans: 2,
+        hint: 'Zaman Batu Baru yang menyaksikan revolusi pertanian.',
+        explain: 'Pada Zaman Neolitik, manusia mula hidup menetap, menjalankan pertanian, penternakan dan membuat tembikar.'
+      },
+      {
+        q: 'Manakah antara berikut merupakan tapak Zaman Prasejarah terkenal di Malaysia tempat penemuan rangka "Perak Man"?',
+        options: ['Lenggong, Perak', 'Bandar Hilir, Melaka', 'Kuala Lumpur', 'Georgetown, Pulau Pinang'],
+        ans: 0,
+        hint: 'Terletak di negeri Perak dan diiktiraf Tapak Warisan Dunia UNESCO.',
+        explain: 'Lenggong, Perak ialah tapak penting Zaman Prasejarah di Malaysia yang menemukan rangka Perak Man.'
+      }
+    ]
+  },
+  {
+    id: 4,
+    slug: 'tamadun-dunia',
+    name: 'Tamadun Dunia',
+    topic: 'Bab 4 & 5: Mengenali Tamadun & Tamadun Awal Dunia',
+    icon: '🏺',
+    crystalName: 'Kristal Lembah Sungai',
+    crystalColor: 0xeab308,
+    hex: '#eab308',
+    skyColor: 0x713f12,
+    groundColor: 0xd97706,
+    theme: 'ancientciv',
+    shortNote: `
+      <ul class="space-y-1.5 text-sm text-slate-200">
+        <li>🏙️ <b>Maksud Tamadun:</b> Bahasa Yunani (<i><b>Civitas</b></i> = bandar/kota), Bahasa Inggeris (<i>Civilisation</i> = tahap pembangunan manusia paling maju), Bahasa Arab (<i><b>Mudun, Madain, Madana</b></i> = tinggi budi bahasa & pembukaan bandar).</li>
+        <li>🌊 <b>Mengapa di Lembah Sungai?</b> Membekalkan air, tanah lanar yang subur untuk pertanian, sumber makanan dan laluan pengangkutan.</li>
+        <li>🏛️ <b>4 Tamadun Awal Dunia:</b>
+          <br>1) <b>Tamadun Mesopotamia</b> (Sg. Tigris & Euphrates): Tamadun terawal (Sumer), tulisan <i>Cuneiform</i>, Ziggurat, Kod Hammurabi.
+          <br>2) <b>Tamadun Mesir Purba</b> (Sg. Nil — "Hadiah Sungai Nil"): Piramid, Firaun, tulisan <i>Hieroglif</i>, kertas papirus.
+          <br>3) <b>Tamadun Indus</b> (Sg. Indus): Bandar terancang <b>Mohenjo-Daro & Harappa</b>, sistem kumbahan & jalan raya lurus.
+          <br>4) <b>Tamadun Huang He</b> (Sg. Huang He / Sungai Kuning): Tulisan piktograf, penghasilan sutera, kompas magnetik & gangsa.</li>
+      </ul>`,
+    collectibleName: 'Mohor Tamadun Awal',
+    collectibleCount: 3,
+    npcName: 'Arkitek Piramid & Ziggurat',
+    npcGreeting: 'Selamat datang ke Dunia 4: Tamadun Dunia! Kumpul 3 Mohor Tamadun Awal, padankan 4 Tamadun Awal Dunia dengan lembah sungai serta sumbangannya, lalu cabar Firaun!',
+    miniGameType: 'wordMatch',
+    miniGameData: {
+      title: '🏺 Padanan 4 Tamadun Awal Dunia',
+      instruction: 'Padankan setiap Tamadun Awal Dunia dengan lokasi lembah sungai dan sumbangan utamanya!',
+      pairs: [
+        { left: 'Tamadun Mesopotamia (Sg. Tigris & Euphrates)', right: 'Tamadun terawal (Sumer), tulisan Cuneiform & Ziggurat' },
+        { left: 'Tamadun Mesir Purba (Lembah Sungai Nil)', right: 'Piramid, Firaun, tulisan Hieroglif & kertas papirus' },
+        { left: 'Tamadun Indus (Lembah Sungai Indus)', right: 'Bandar terancang Mohenjo-Daro & Harappa bersistem kumbahan' },
+        { left: 'Tamadun Huang He (Lembah Sungai Kuning)', right: 'Tulisan piktograf, penghasilan sutera & kompas magnetik' }
+      ],
+      puzzleWord: 'CIVITAS',
+      puzzleClue: 'Perkataan Bahasa Yunani bagi tamadun yang bermaksud bandar atau kota (7 huruf):'
+    },
+    bossName: 'Firaun Penjaga Lembah',
+    bossQuestions: [
+      {
+        q: 'Apakah maksud perkataan Bahasa Arab "mudun", "madain" dan "madana" dalam konsep tamadun?',
+        options: ['Tinggi budi bahasa dan pembukaan bandar', 'Kawasan padang pasir tandus', 'Kehidupan berpindah-randah', 'Peperangan di lautan'],
+        ans: 0,
+        hint: 'Berkaitan dengan akhlak mulia dan pembangunan bandar.',
+        explain: 'Dalam Bahasa Arab, mudun, madain dan madana bermaksud tinggi budi bahasa dan pembukaan bandar.'
+      },
+      {
+        q: 'Mengapakah keempat-empat Tamadun Awal Dunia berkembang pesat di kawasan lembah sungai?',
+        options: ['Tanah subur untuk pertanian, bekalan air dan kemudahan pengangkutan', 'Kerana tiada hujan sepanjang tahun', 'Supaya jauh daripada sumber makanan', 'Kerana sungai membeku sepanjang masa'],
+        ans: 0,
+        hint: 'Sungai membekalkan air dan lumpur subur untuk tanaman.',
+        explain: 'Lembah sungai menyediakan tanah yang subur untuk pertanian, sumber air, makanan dan laluan perhubungan.'
+      },
+      {
+        q: 'Tamadun awal manakah yang terkenal dengan pembinaan bandar terancang Mohenjo-Daro dan Harappa?',
+        options: ['Tamadun Mesopotamia', 'Tamadun Mesir Purba', 'Tamadun Indus', 'Tamadun Huang He'],
+        ans: 2,
+        hint: 'Terletak di Lembah Sungai Indus.',
+        explain: 'Tamadun Indus terkenal dengan perancangan bandar sistematik seperti Mohenjo-Daro dan Harappa.'
+      }
+    ]
+  },
+  {
+    id: 5,
+    slug: 'peningkatan-tamadun',
+    name: 'Peningkatan Tamadun',
+    topic: 'Bab 6 & 7: Peningkatan Tamadun Yunani, Rom, India & China',
+    icon: '🏛️',
+    crystalName: 'Kristal Klasik',
+    crystalColor: 0xa855f7,
+    hex: '#a855f7',
+    skyColor: 0x3b0764,
+    groundColor: 0x581c87,
+    theme: 'classical',
+    shortNote: `
+      <ul class="space-y-1.5 text-sm text-slate-200">
+        <li>🇬🇷 <b>Tamadun Yunani (Pemerintahan):</b> Kewujudan negara-kota (<i><b>Polis</b></i> seperti Athens & Sparta). Athens memperkenalkan sistem <b>Demokrasi</b> (rakyat memilih pemimpin melalui Dewan Perhimpunan).</li>
+        <li>🇮🇹 <b>Tamadun Rom (Seni Bina):</b> Terkenal dengan seni bina kukuh seperti <b>Colosseum</b> (tempat pertunjukan), <b>Pantheon</b> (rumah ibadat berkubah) dan <b>Akueduk</b> (saluran bekalan air ke bandar).</li>
+        <li>🇮🇳 <b>Tamadun India (Perluasan Kuasa):</b> Dinasti Maurya dipimpin Chandragupta Maurya dan <b>Asoka</b>. Selepas Perang Kalinga, Asoka menekankan dasar penyebaran agama Buddha secara aman melalui Tiang Asoka.</li>
+        <li>🇨🇳 <b>Tamadun China (Pendidikan):</b> Memperkenalkan sistem <b>Peperiksaan Awam</b> berasaskan ajaran Konfusianisme (3 tahap: <i>Xiucai</i>, <i>Juren</i>, <i>Jinshi</i>) untuk melantik pegawai kerajaan yang berilmu.</li>
+      </ul>`,
+    collectibleName: 'Skrol Empayar Klasik',
+    collectibleCount: 3,
+    npcName: 'Cendekiawan Polis & Empayar',
+    npcGreeting: 'Selamat datang ke Dunia 5: Peningkatan Tamadun! Kumpul 3 Skrol Empayar Klasik, padankan peningkatan Yunani, Rom, India & China, lalu tewaskan Panglima Empayar!',
+    miniGameType: 'wordMatch',
+    miniGameData: {
+      title: '🏛️ Peningkatan 4 Tamadun Utama Dunia',
+      instruction: 'Padankan setiap tamadun dengan bidang peningkatan dan sumbangan utamanya!',
+      pairs: [
+        { left: 'Tamadun Yunani (Negara-Kota Athens)', right: 'Peningkatan pemerintahan & pengenalan sistem Demokrasi' },
+        { left: 'Tamadun Rom', right: 'Peningkatan seni bina: Colosseum, Pantheon & Akueduk' },
+        { left: 'Tamadun India (Dinasti Maurya - Asoka)', right: 'Perluasan kuasa & penyebaran ajaran Buddha secara aman' },
+        { left: 'Tamadun China', right: 'Peningkatan pendidikan melalui Peperiksaan Awam (Xiucai, Juren, Jinshi)' }
+      ],
+      puzzleWord: 'DEMOKRASI',
+      puzzleClue: 'Sistem pemerintahan yang diasaskan di Athens, Yunani di mana rakyat terlibat dalam pentadbiran:'
+    },
+    bossName: 'Panglima Empayar Klasik',
+    bossQuestions: [
+      {
+        q: 'Apakah fungsi utama binaan "Akueduk" dalam peningkatan seni bina Tamadun Rom?',
+        options: ['Membekalkan sumber air bersih ke bandar Rom', 'Tempat perlumbaan kereta kuda', 'Kubur diraja maharaja Rom', 'Menara kawalan di laut'],
+        ans: 0,
+        hint: 'Aqua bermaksud air dalam Bahasa Latin.',
+        explain: 'Akueduk ialah sistem saluran air yang dibina oleh jurutera Rom untuk membekalkan air ke bandar.'
+      },
+      {
+        q: 'Mengapakah Maharaja Asoka di Tamadun India mengubah dasar perluasan kuasa daripada peperangan kepada penyebaran ajaran secara aman?',
+        options: ['Kerana keinsafan melihat kemusnahan besar dalam Perang Kalinga', 'Kerana kehabisan tentera', 'Kerana diminta oleh Tamadun Rom', 'Kerana tidak mempunyai senjata'],
+        ans: 0,
+        hint: 'Perang Kalinga mengorbankan ratusan ribu nyawa.',
+        explain: 'Kesan dahsyat Perang Kalinga menginsafkan Asoka lalu beliau menyebarkan agama Buddha secara aman.'
+      },
+      {
+        q: 'Apakah tujuan utama pelaksanaan sistem Peperiksaan Awam dalam Tamadun China?',
+        options: ['Memilih dan melantik pegawai kerajaan yang berilmu dan berkelayakan', 'Menentukan harga barang di pasar', 'Memilih ketua tentera laut sahaja', 'Mengira jumlah penduduk kampung'],
+        ans: 0,
+        hint: 'Berasaskan ajaran Konfusianisme untuk pentadbiran negara.',
+        explain: 'Peperiksaan Awam Tamadun China bertujuan melantik pegawai perkhidmatan awam yang berilmu dan berintegriti.'
+      }
+    ]
+  },
+  {
+    id: 6,
+    slug: 'legasi-tamadun-islam',
+    name: 'Legasi Tamadun Islam',
+    topic: 'Bab 8: Tamadun Islam dan Sumbangannya',
+    icon: '🕌',
+    crystalName: 'Kristal Andalusia',
+    crystalColor: 0x10b981,
+    hex: '#10b981',
+    skyColor: 0x064e3b,
+    groundColor: 0x047857,
+    theme: 'islamic',
+    shortNote: `
+      <ul class="space-y-1.5 text-sm text-slate-200">
+        <li>🌙 <b>Masyarakat Arab Zaman Jahiliah:</b> Zaman sebelum kedatangan Islam (tiada nabi & kitab suci), mengamalkan semangat assabiyah (kepuakan), menyembah berhala, namun menghormati tetamu & menepati janji.</li>
+        <li>📖 <b>Kemunculan Islam & Ketokohan Nabi Muhammad SAW:</b> Wahyu pertama (Surah al-Alaq) di Gua Hira (610 M), Hijrah ke Madinah (622 M), menggubal <b>Piagam Madinah</b>, dan memiliki 4 sifat terpuji (<i>Siddiq, Amanah, Tabligh, Fatanah</i>).</li>
+        <li>🔭 <b>Sumbangan Ilmu & Tokoh:</b> Penubuhan <b>Baitul Hikmah</b> (pusat penterjemahan ilmu di Baghdad). Tokoh: <b>Ibn Sina</b> (perubatan), <b>Al-Khawarizmi</b> (matematik/algebra), <b>Al-Battani</b> (astronomi), <b>Ibn Battuta</b> (pelayaran).</li>
+        <li>🕌 <b>Politik, Ekonomi & Seni Bina:</b> Sistem syura, institusi <b>Baitulmal</b> & zakat, larangan riba, serta seni bina indah seperti <b>Masjid Cordova</b> dan <b>Istana Alhambra</b>.</li>
+      </ul>`,
+    collectibleName: 'Astrolab Ilmu',
+    collectibleCount: 3,
+    npcName: 'Ilmuwan Baitul Hikmah',
+    npcGreeting: 'Selamat datang ke Dunia 6: Legasi Tamadun Islam! Kumpul 3 Astrolab Ilmu, selesaikan cabaran sumbangan Tamadun Islam dan tewaskan Penjaga Khazanah Andalusia!',
+    miniGameType: 'detectiveCase',
+    miniGameData: {
+      title: '🕌 Cabaran Legasi Tamadun Islam',
+      cases: [
+        {
+          evidence: '📜 Rekod Sejarah: Pada tahun 622 M, Nabi Muhammad SAW berhijrah ke Madinah dan menggubal perlembagaan bertulis pertama di dunia yang menyatukan masyarakat berbilang kaum dan agama.',
+          question: 'Apakah nama perlembagaan bertulis yang digubal oleh Nabi Muhammad SAW di Madinah tersebut?',
+          options: [
+            'Piagam Madinah (Sahifah Madinah)',
+            'Undang-Undang Hammurabi',
+            'Tiang Asoka'
+          ],
+          ans: 0,
+          explain: 'Piagam Madinah menjamin kebebasan beragama, keadilan dan perpaduan penduduk Madinah.'
+        },
+        {
+          evidence: '🔭 Rekod Baitul Hikmah: Tokoh ilmuwan Islam ini menghasilkan kitab perubatan terkenal "Al-Qanun fi al-Tibb" yang menjadi rujukan utama di Eropah selama berabad-abad.',
+          question: 'Siapakah tokoh ilmuwan perubatan Islam yang dimaksudkan?',
+          options: [
+            'Ibn Sina',
+            'Al-Khawarizmi',
+            'Ibn Battuta'
+          ],
+          ans: 0,
+          explain: 'Ibn Sina ialah tokoh perubatan Islam terkemuka yang menulis kitab Al-Qanun fi al-Tibb.'
+        },
+        {
+          evidence: '🕌 Rekod Seni Bina: Bangunan bersejarah di Sepanyol (Andalusia) ini terkenal dengan seni ukiran khat, gerbang ladam kuda dan menara yang menjadi bukti kegemilangan seni bina Islam di Eropah.',
+          question: 'Manakah antara berikut merupakan contoh seni bina agung Tamadun Islam di Andalusia?',
+          options: [
+            'Masjid Cordova dan Istana Alhambra',
+            'Colosseum dan Pantheon',
+            'Piramid Giza dan Ziggurat'
+          ],
+          ans: 0,
+          explain: 'Masjid Cordova dan Istana Alhambra di Sepanyol ialah mercu tanda keagungan seni bina Tamadun Islam.'
+        }
+      ]
+    },
+    bossName: 'Penjaga Khazanah Andalusia',
+    bossQuestions: [
+      {
+        q: 'Apakah sifat terpuji Nabi Muhammad SAW yang bermaksud "bercakap benar" dan "bijaksana"?',
+        options: ['Siddiq dan Fatanah', 'Tabligh dan Amanah', 'Assabiyah dan Jahiliah', 'Syura dan Zakat'],
+        ans: 0,
+        hint: 'Siddiq = benar, Amanah = jujur, Tabligh = menyampaikan, Fatanah = bijaksana.',
+        explain: 'Siddiq bermaksud bercakap benar manakala Fatanah bermaksud bijaksana.'
+      },
+      {
+        q: 'Apakah peranan utama institusi "Baitul Hikmah" pada zaman Kerajaan Abbasiyah?',
+        options: ['Pusat penterjemahan karya ilmu dan penyelidikan keilmuan', 'Pelabuhan kapal perang di Laut Merah', 'Tempat menyimpan senjata besi', 'Pasar jual beli binatang ternakan'],
+        ans: 0,
+        hint: 'Baitul Hikmah bermaksud Rumah Kebijaksanaan di Baghdad.',
+        explain: 'Baitul Hikmah berfungsi sebagai pusat penterjemahan pelbagai karya ilmu asing ke dalam bahasa Arab dan pusat kajian ilmu.'
+      },
+      {
+        q: 'Dalam aspek ekonomi Tamadun Islam, apakah fungsi institusi Baitulmal?',
+        options: ['Menguruskan harta dan kewangan negara untuk kebajikan umat', 'Mengutip cukai riba yang tinggi', 'Menutup aktiviti perdagangan antarabangsa', 'Membina istana persendirian sahaja'],
+        ans: 0,
+        hint: 'Baitulmal ialah perbendaharaan negara Islam.',
+        explain: 'Baitulmal berperanan menguruskan sumber kewangan dan harta negara bagi pembangunan serta kebajikan rakyat.'
+      }
+    ]
+  }
+];
+
+/* ============================================================================
+ * 3. FINAL BOSS: 30 QUESTIONS (5 PER TEXTBOOK WORLD, MIXED OBJEKTIF/TF/KBAT)
+ * ============================================================================ */
+const FINAL_BOSS_QUESTIONS = [
+  // DUNIA 1: TEROKAI ILMU SEJARAH (5)
+  { t: 1, type: 'Objektif', q: 'Perkataan "Historia" berasal daripada Bahasa Yunani yang bermaksud...', opts: ['Penyelidikan', 'Keturunan', 'Masa depan', 'Peta purba'], ans: 0, exp: 'Historia bermaksud penyelidikan.' },
+  { t: 1, type: 'Benar/Salah', q: 'BENAR atau SALAH: Perkataan Arab "Syajaratun" bermaksud pokok, salasilah, riwayat dan asal usul.', opts: ['Benar', 'Salah'], ans: 0, exp: 'Benar! Syajaratun bermaksud pokok atau salasilah.' },
+  { t: 1, type: 'Objektif', q: 'Siapakah tokoh sejarawan yang menyatakan sejarah ialah proses perbincangan antara masa ini dengan masa lampau?', opts: ['E.H. Carr', 'Herodotus', 'Ibn Khaldun', 'Khoo Kay Kim'], ans: 0, exp: 'E.H. Carr menyatakan sejarah ialah dialog antara masa kini dan masa lampau.' },
+  { t: 1, type: 'Objektif', q: 'Sumber yang belum diolah, bersifat asli dan belum ditafsir dikenali sebagai...', opts: ['Sumber Primer', 'Sumber Sekunder', 'Sumber Digital', 'Sumber Rekaan'], ans: 0, exp: 'Sumber Primer bersifat asli, belum diolah dan belum ditafsir.' },
+  { t: 1, type: 'KBAT', q: 'Siti menemu bual bekas guru besar untuk menulis sejarah sekolahnya. Apakah kaedah penyelidikan yang digunakan?', opts: ['Kaedah Lisan', 'Kaedah Arkeologi', 'Kaedah Ekskavasi', 'Kaedah Kimia'], ans: 0, exp: 'Menemu bual orang sumber ialah Kaedah Lisan.' },
+
+  // DUNIA 2: EVOLUSI DUNIA (5)
+  { t: 2, type: 'Objektif', q: 'Ahli sains menjangkakan bahawa usia bumi kita melebihi...', opts: ['4.6 bilion tahun', '10,000 tahun', '500 juta tahun', '2,000 tahun'], ans: 0, exp: 'Usia bumi dianggarkan melebihi 4.6 bilion tahun.' },
+  { t: 2, type: 'Objektif', q: 'Apakah proses yang berlaku apabila suhu bumi menurun dan air laut membeku menjadi glasier?', opts: ['Pengglasieran', 'Pencairan', 'Pembandaran', 'Ekskavasi'], ans: 0, exp: 'Pengglasieran ialah proses pembekuan air menjadi lapisan ais/glasier.' },
+  { t: 2, type: 'Objektif', q: 'Pada tahap Zaman Air Batu manakah manusia mula mengetahui cara membuat api dan wujud haiwan mamot berbulu?', opts: ['Zaman Pleistosen', 'Zaman Miosen', 'Zaman Pliosen', 'Zaman Holosen'], ans: 0, exp: 'Zaman Pleistosen menyaksikan glasier utama dan kemahiran manusia membuat api.' },
+  { t: 2, type: 'Benar/Salah', q: 'BENAR atau SALAH: Zaman Holosen bermula kira-kira 11,700 tahun dahulu hingga kini dan menyaksikan perkembangan pertanian.', opts: ['Benar', 'Salah'], ans: 0, exp: 'Benar! Suhu meningkat pada Zaman Holosen membolehkan manusia menjalankan pertanian.' },
+  { t: 2, type: 'KBAT', q: 'Mengapakah Kepulauan Melayu terbentuk pada akhir Zaman Air Batu?', opts: ['Pencairan air batu menaikkan paras air laut lalu menenggelamkan Pentas Sunda', 'Gunung berapi menimbus seluruh lautan', 'Semua sungai di Asia Tenggara kering', 'Benua Afrika bercantum dengan Asia'], ans: 0, exp: 'Kenaikan paras air laut menenggelamkan daratan Pentas Sunda dan membentuk pulau-pulau Kepulauan Melayu.' },
+
+  // DUNIA 3: KENALI ZAMAN PRASEJARAH (5)
+  { t: 3, type: 'Objektif', q: 'Zaman Prasejarah juga dikenali sebagai zaman "Nirleka" yang bermaksud zaman...', opts: ['Sebelum manusia mengenal tulisan', 'Selepas terciptanya mesin cetak', 'Pemerintahan empayar moden', 'Penerokaan lautan dalam'], ans: 0, exp: 'Nirleka bermaksud tiada tulisan.' },
+  { t: 3, type: 'Objektif', q: 'Manakah antara berikut merupakan urutan empat tahap Zaman Prasejarah yang tepat?', opts: ['Paleolitik → Mesolitik → Neolitik → Logam', 'Logam → Neolitik → Mesolitik → Paleolitik', 'Neolitik → Paleolitik → Logam → Mesolitik', 'Mesolitik → Logam → Paleolitik → Neolitik'], ans: 0, exp: 'Urutan kronologi ialah Paleolitik, Mesolitik, Neolitik dan Logam.' },
+  { t: 3, type: 'Objektif', q: 'Pada zaman manakah manusia mula hidup menetap, bercucuk tanam, menternak binatang dan membuat tembikar?', opts: ['Zaman Neolitik', 'Zaman Paleolitik', 'Zaman Miosen', 'Zaman Jahiliah'], ans: 0, exp: 'Zaman Neolitik (Zaman Batu Baru) membawa perubahan besar ke arah kehidupan menetap dan pertanian.' },
+  { t: 3, type: 'Benar/Salah', q: 'BENAR atau SALAH: Peralatan seperti kapak, tulang mawas dan beliung daripada gangsa dan besi dicipta pada Zaman Logam.', opts: ['Benar', 'Salah'], ans: 0, exp: 'Benar! Inovasi peralatan gangsa dan besi berlaku pada Zaman Logam.' },
+  { t: 3, type: 'KBAT', q: 'Penemuan rangka "Perak Man" di Lenggong, Perak dan lukisan gua di Gua Niah, Sarawak membuktikan bahawa...', opts: ['Malaysia mempunyai petempatan manusia sejak Zaman Prasejarah', 'Manusia prasejarah sudah menggunakan komputer', 'Tiada kehidupan di Asia Tenggara pada masa lampau', 'Semua manusia prasejarah tinggal di bandar moden'], ans: 0, exp: 'Tapak di Lenggong dan Gua Niah membuktikan kewujudan masyarakat prasejarah di negara kita.' },
+
+  // DUNIA 4: TAMADUN DUNIA (5)
+  { t: 4, type: 'Objektif', q: 'Perkataan tamadun dalam Bahasa Yunani diambil daripada perkataan "civitas" yang bermaksud...', opts: ['Bandar atau kota', 'Hutan rimba', 'Lautan luas', 'Senjata besi'], ans: 0, exp: 'Civitas bermaksud bandar atau kota.' },
+  { t: 4, type: 'Objektif', q: 'Tamadun awal manakah yang berkembang di antara Sungai Tigris dan Sungai Euphrates?', opts: ['Tamadun Mesopotamia', 'Tamadun Mesir Purba', 'Tamadun Indus', 'Tamadun Huang He'], ans: 0, exp: 'Mesopotamia bermaksud tanah di antara dua sungai, iaitu Tigris dan Euphrates.' },
+  { t: 4, type: 'Objektif', q: 'Herodotus menggelarkan Tamadun Mesir Purba sebagai "Hadiah Sungai Nil" kerana...', opts: ['Banjir tahunan Sungai Nil membawa lumpur hitam yang subur untuk pertanian', 'Sungai Nil dipenuhi emas tulen', 'Sungai Nil mengalir ke bulan', 'Tiada manusia tinggal di tepi Sungai Nil'], ans: 0, exp: 'Lumpur subur Sungai Nil membolehkan pertanian berkembang pesat di Mesir Purba.' },
+  { t: 4, type: 'Benar/Salah', q: 'BENAR atau SALAH: Bandar Mohenjo-Daro dan Harappa dalam Tamadun Indus mempunyai sistem perancangan bandar dan kumbahan yang teratur.', opts: ['Benar', 'Salah'], ans: 0, exp: 'Benar! Tamadun Indus terkenal dengan bandar terancang Mohenjo-Daro dan Harappa.' },
+  { t: 4, type: 'Objektif', q: 'Antara sumbangan penting Tamadun Huang He kepada dunia ialah...', opts: ['Penghasilan sutera, tulisan piktograf dan kompas magnetik', 'Pembinaan Piramid Giza', 'Pengenalan tulisan Hieroglif', 'Pembinaan Colosseum'], ans: 0, exp: 'Tamadun Huang He menyumbang penghasilan sutera, tulisan piktograf, kompas dan peralatan besi.' },
+
+  // DUNIA 5: PENINGKATAN TAMADUN (5)
+  { t: 5, type: 'Objektif', q: 'Apakah sistem pemerintahan yang diperkenalkan di negara-kota Athens dalam Tamadun Yunani?', opts: ['Demokrasi', 'Monarki mutlak', 'Tirani', 'Feudal'], ans: 0, exp: 'Athens memperkenalkan sistem Demokrasi yang melibatkan rakyat dalam Dewan Perhimpunan.' },
+  { t: 5, type: 'Objektif', q: 'Manakah antara berikut merupakan binaan ikonik dalam peningkatan seni bina Tamadun Rom?', opts: ['Colosseum, Pantheon dan Akueduk', 'Piramid dan Sphinx', 'Ziggurat dan Taman Tergantung', 'Masjid Cordova'], ans: 0, exp: 'Colosseum, Pantheon dan Akueduk adalah antara seni bina teragung Tamadun Rom.' },
+  { t: 5, type: 'Objektif', q: 'Dalam Tamadun India, Maharaja Asoka menyebarkan ajaran agama Buddha secara aman selepas...', opts: ['Perang Kalinga', 'Perang Troya', 'Perang Badar', 'Perang Dunia'], ans: 0, exp: 'Kemusnahan Perang Kalinga menginsafkan Asoka untuk menyebarkan ajaran secara aman.' },
+  { t: 5, type: 'Benar/Salah', q: 'BENAR atau SALAH: Tamadun China melaksanakan sistem Peperiksaan Awam berasaskan ajaran Konfusianisme untuk memilih pegawai kerajaan.', opts: ['Benar', 'Salah'], ans: 0, exp: 'Benar! Peperiksaan Awam (Xiucai, Juren, Jinshi) memilih pegawai berilmu.' },
+  { t: 5, type: 'KBAT', q: 'Mengapakah seni bina Rom seperti Akueduk dan jalan raya masih dikagumi sehingga hari ini?', opts: ['Ketahanan teknologi binaan, perancangan bandar dan manfaat kepada kesejahteraan rakyat', 'Kerana dibina daripada kayu ringan', 'Kerana tidak pernah digunakan oleh penduduk', 'Kerana dibina dalam masa satu hari'], ans: 0, exp: 'Kejuruteraan Rom mengutamakan ketahanan struktur dan kemudahan awam.' },
+
+  // DUNIA 6: LEGASI TAMADUN ISLAM (5)
+  { t: 6, type: 'Objektif', q: 'Masyarakat Arab sebelum kedatangan Islam dikenali sebagai masyarakat Jahiliah kerana...', opts: ['Tidak mempunyai nabi dan kitab suci sebagai petunjuk', 'Tidak pandai berniaga langsung', 'Tinggal di kawasan kutub utara', 'Tidak mempunyai bahasa pertuturan'], ans: 0, exp: 'Zaman Jahiliah merujuk kepada zaman ketiadaan nabi dan kitab suci serta keruntuhan akhlak.' },
+  { t: 6, type: 'Objektif', q: 'Apakah nama perlembagaan bertulis pertama di dunia yang digubal oleh Nabi Muhammad SAW selepas Hijrah ke Madinah?', opts: ['Piagam Madinah', 'Kod Hammurabi', 'Magna Carta', 'Perjanjian Pangkor'], ans: 0, exp: 'Piagam Madinah menyatukan masyarakat Madinah yang berbilang kaum dan agama.' },
+  { t: 6, type: 'Objektif', q: 'Siapakah tokoh ilmuwan Islam yang terkenal dalam bidang perubatan melalui kitab "Al-Qanun fi al-Tibb"?', opts: ['Ibn Sina', 'Al-Khawarizmi', 'Ibn Battuta', 'Al-Battani'], ans: 0, exp: 'Ibn Sina ialah tokoh perubatan terulung Tamadun Islam.' },
+  { t: 6, type: 'Benar/Salah', q: 'BENAR atau SALAH: Baitul Hikmah di Baghdad berperanan sebagai pusat penterjemahan karya ilmu dan penyelidikan.', opts: ['Benar', 'Salah'], ans: 0, exp: 'Benar! Baitul Hikmah memacu perkembangan ilmu pengetahuan dunia.' },
+  { t: 6, type: 'KBAT', q: 'Bagaimanakah semangat Piagam Madinah boleh diamalkan oleh murid Malaysia pada hari ini?', opts: ['Menghormati kepelbagaian agama, bekerjasama dan menjaga keharmonian masyarakat', 'Mengamalkan sikap assabiyah atau berpuak-puak', 'Mengabaikan peraturan sekolah', 'Mementingkan diri sendiri sahaja'], ans: 0, exp: 'Piagam Madinah menekankan toleransi, keadilan dan perpaduan masyarakat majmuk.' }
+];
+
+/* ============================================================================
+ * 4. STATE & PERSISTENCE (Multi-Student LocalStorage + Teacher Analytics)
+ * ============================================================================ */
+const STORAGE_KEY = 'misi_sejarah_t1_bab1_v1';
+
+const DefaultAvatar = {
+  skinColor: '#f5cba7',
+  hairStyle: 'spiky',
+  hairColor: '#1f2937',
+  shirtColor: '#2563eb',
+  pantsColor: '#1e293b',
+  hat: 'explorer',
+  glasses: 'none',
+  backpack: 'explorer',
+  crownUnlocked: false
+};
+
+function createDefaultWorldProgress() {
+  const wp = {};
+  for (let i = 1; i <= 6; i++) {
+    wp[i] = {
+      collectedItems: [false, false, false],
+      collected: 0,
+      miniGameDone: false,
+      bossDefeated: false
+    };
+  }
+  return wp;
+}
+
+const GameState = {
+  students: {},
+  currentStudentId: null,
+  currentWorldId: 0, // 0 = Hub, 1..6 = 6 Textbook Worlds
+  inCreator: true,
+  worldProgressTemp: { collectedItems: [false, false, false], collected: 0, miniGameDone: false, bossDefeated: false },
+
+  normalizeWorldEntry(rawEntry) {
+    const entry = rawEntry || {};
+    let items = Array.isArray(entry.collectedItems) && entry.collectedItems.length === 3
+      ? entry.collectedItems.map(Boolean)
+      : [false, false, false];
+
+    // Preserve numeric count if collectedItems wasn't stored yet
+    const numericCount = Math.max(0, Math.min(3, Number(entry.collected) || 0));
+    if (!Array.isArray(entry.collectedItems) && numericCount > 0) {
+      items = [0 < numericCount, 1 < numericCount, 2 < numericCount];
+    }
+
+    const collected = items.filter(Boolean).length;
+    return {
+      collectedItems: items,
+      collected,
+      miniGameDone: Boolean(entry.miniGameDone),
+      bossDefeated: Boolean(entry.bossDefeated)
+    };
+  },
+
+  loadAll() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        this.students = JSON.parse(raw);
+        // Migrate and audit existing student profiles safely without deleting progress
+        Object.values(this.students).forEach(st => {
+          if (!Array.isArray(st.crystals)) st.crystals = [];
+          if (!st.topicStats) st.topicStats = {};
+          if (!st.worldProgress) st.worldProgress = createDefaultWorldProgress();
+
+          const verifiedCrystals = [];
+          for (let i = 1; i <= 6; i++) {
+            if (!st.topicStats[i]) st.topicStats[i] = { correct: 0, total: 0 };
+            st.worldProgress[i] = this.normalizeWorldEntry(st.worldProgress[i]);
+
+            const wp = st.worldProgress[i];
+            const allObjectivesDone = wp.collected >= 3 && wp.miniGameDone && wp.bossDefeated;
+            if (allObjectivesDone) {
+              verifiedCrystals.push(i);
+            }
+          }
+          // Keep crystals strictly synchronized with worlds where ALL objectives are completed
+          st.crystals = verifiedCrystals;
+          if (st.crystals.length < 6 && st.avatar && !st.finalBossPassed && st.coins < 50) {
+            // Preserve crown if purchased or final boss passed; otherwise reflect true 6-crystal unlock
+          }
+        });
+        this.saveAll();
+      }
+    } catch (e) { this.students = {}; }
+  },
+
+  saveAll() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.students));
+    } catch (e) {}
+  },
+
+  getStudent() {
+    return this.students[this.currentStudentId] || null;
+  },
+
+  getWorldProgress(worldId, student = null) {
+    const st = student || this.getStudent();
+    if (!st) {
+      return { collectedItems: [false, false, false], collected: 0, miniGameDone: false, bossDefeated: false };
+    }
+    if (!st.worldProgress) st.worldProgress = createDefaultWorldProgress();
+    st.worldProgress[worldId] = this.normalizeWorldEntry(st.worldProgress[worldId]);
+    return st.worldProgress[worldId];
+  },
+
+  getWorldCompletion(worldId, student = null) {
+    const w = WORLDS_DATA.find(x => x.id === worldId);
+    const totalArtefacts = w ? w.collectibleCount : 3;
+    const wp = this.getWorldProgress(worldId, student);
+    const collected = Math.min(totalArtefacts, wp.collected);
+    const artefactsDone = collected >= totalArtefacts;
+    const challengeDone = Boolean(wp.miniGameDone);
+    const bossDone = Boolean(wp.bossDefeated);
+
+    // 5 equal milestones per world: 3 artefacts + 1 interactive challenge + 1 mini-boss
+    const completedUnits = collected + (challengeDone ? 1 : 0) + (bossDone ? 1 : 0);
+    const totalUnits = totalArtefacts + 2;
+    const percentage = Math.round((completedUnits / totalUnits) * 100);
+    const isCompleted = artefactsDone && challengeDone && bossDone;
+
+    return {
+      collected,
+      totalArtefacts,
+      artefactsDone,
+      challengeDone,
+      bossDone,
+      completedUnits,
+      totalUnits,
+      percentage,
+      isCompleted
+    };
+  },
+
+  getOverallCompletion(student = null) {
+    let completedWorlds = 0;
+    let totalArtefacts = 0;
+    let maxArtefacts = 0;
+    let totalChallenges = 0;
+    let totalBosses = 0;
+    let completedUnits = 0;
+    let totalUnits = 0;
+
+    WORLDS_DATA.forEach(w => {
+      const c = this.getWorldCompletion(w.id, student);
+      if (c.isCompleted) completedWorlds++;
+      totalArtefacts += c.collected;
+      maxArtefacts += c.totalArtefacts;
+      if (c.challengeDone) totalChallenges++;
+      if (c.bossDone) totalBosses++;
+      completedUnits += c.completedUnits;
+      totalUnits += c.totalUnits;
+    });
+
+    const percentage = totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
+    return {
+      completedWorlds,
+      totalWorlds: WORLDS_DATA.length,
+      totalArtefacts,
+      maxArtefacts,
+      totalChallenges,
+      totalBosses,
+      percentage
+    };
+  },
+
+  checkAndAwardWorldCrystal(worldId) {
+    const st = this.getStudent();
+    if (!st) return false;
+    const comp = this.getWorldCompletion(worldId, st);
+    if (comp.isCompleted && !st.crystals.includes(worldId)) {
+      this.addReward({ score: 30, coins: 25, crystalId: worldId });
+      return true;
+    }
+    this.saveAll();
+    UI.updateHUD();
+    return comp.isCompleted;
+  },
+
+  recordArtefactCollected(worldId, artefactIdx) {
+    const st = this.getStudent();
+    if (!st) return { newlyCompletedWorld: false };
+    const wp = this.getWorldProgress(worldId, st);
+    if (artefactIdx >= 0 && artefactIdx < 3) {
+      wp.collectedItems[artefactIdx] = true;
+    }
+    wp.collected = wp.collectedItems.filter(Boolean).length;
+    this.worldProgressTemp = { ...wp, collectedItems: [...wp.collectedItems] };
+    this.saveAll();
+    const newlyCompletedWorld = this.checkAndAwardWorldCrystal(worldId);
+    return { newlyCompletedWorld, wp };
+  },
+
+  recordChallengeCompleted(worldId) {
+    const st = this.getStudent();
+    if (!st) return { newlyCompletedWorld: false };
+    const wp = this.getWorldProgress(worldId, st);
+    wp.miniGameDone = true;
+    this.worldProgressTemp = { ...wp, collectedItems: [...wp.collectedItems] };
+    this.saveAll();
+    const newlyCompletedWorld = this.checkAndAwardWorldCrystal(worldId);
+    return { newlyCompletedWorld, wp };
+  },
+
+  recordBossDefeated(worldId) {
+    const st = this.getStudent();
+    if (!st) return { newlyCompletedWorld: false };
+    const wp = this.getWorldProgress(worldId, st);
+    wp.bossDefeated = true;
+    this.worldProgressTemp = { ...wp, collectedItems: [...wp.collectedItems] };
+    this.saveAll();
+    const newlyCompletedWorld = this.checkAndAwardWorldCrystal(worldId);
+    return { newlyCompletedWorld, wp };
+  },
+
+  syncWorldProgress(worldId) {
+    const st = this.getStudent();
+    if (!st) return;
+    const wp = this.getWorldProgress(worldId, st);
+    if (Array.isArray(this.worldProgressTemp.collectedItems)) {
+      wp.collectedItems = wp.collectedItems.map((v, i) => v || Boolean(this.worldProgressTemp.collectedItems[i]));
+    }
+    wp.collected = wp.collectedItems.filter(Boolean).length;
+    wp.miniGameDone = wp.miniGameDone || Boolean(this.worldProgressTemp.miniGameDone);
+    wp.bossDefeated = wp.bossDefeated || Boolean(this.worldProgressTemp.bossDefeated);
+    this.saveAll();
+    this.checkAndAwardWorldCrystal(worldId);
+  },
+
+  saveAll() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.students));
+    } catch (e) {}
+  },
+
+  getStudent() {
+    return this.students[this.currentStudentId] || null;
+  },
+
+  getWorldProgress(worldId) {
+    const st = this.getStudent();
+    if (!st) return { collected: 0, miniGameDone: false, bossDefeated: false };
+    if (!st.worldProgress) st.worldProgress = createDefaultWorldProgress();
+    if (!st.worldProgress[worldId]) {
+      st.worldProgress[worldId] = { collected: 0, miniGameDone: false, bossDefeated: false };
+    }
+    return st.worldProgress[worldId];
+  },
+
+  syncWorldProgress(worldId) {
+    const st = this.getStudent();
+    if (!st) return;
+    const wp = this.getWorldProgress(worldId);
+    wp.collected = Math.max(wp.collected, this.worldProgressTemp.collected);
+    wp.miniGameDone = wp.miniGameDone || this.worldProgressTemp.miniGameDone;
+    wp.bossDefeated = wp.bossDefeated || this.worldProgressTemp.bossDefeated;
+    this.saveAll();
+  },
+
+  createOrSelectStudent(name, avatarConfig) {
+    const cleanName = (name || '').trim() || 'Pengembara';
+    const id = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '_') || 'pengembara';
+    if (!this.students[id]) {
+      this.students[id] = {
+        id,
+        name: cleanName,
+        avatar: { ...DefaultAvatar, ...avatarConfig },
+        score: 0,
+        coins: 0,
+        crystals: [], // array of world ids 1..6
+        badges: ['🧭 Pengembara Baru'],
+        worldProgress: createDefaultWorldProgress(),
+        topicStats: {
+          1: { correct: 0, total: 0 }, 2: { correct: 0, total: 0 },
+          3: { correct: 0, total: 0 }, 4: { correct: 0, total: 0 },
+          5: { correct: 0, total: 0 }, 6: { correct: 0, total: 0 }
+        },
+        finalBossPassed: false,
+        finalBossBest: 0,
+        lastPlayed: new Date().toLocaleDateString('ms-MY')
+      };
+    } else {
+      this.students[id].avatar = { ...this.students[id].avatar, ...avatarConfig };
+      this.students[id].lastPlayed = new Date().toLocaleDateString('ms-MY');
+    }
+    this.currentStudentId = id;
+    this.saveAll();
+    return this.students[id];
+  },
+
+  addReward({ score = 0, coins = 0, badge = null, crystalId = null }) {
+    const st = this.getStudent();
+    if (!st) return;
+    st.score += score;
+    st.coins += coins;
+    if (badge && !st.badges.includes(badge)) {
+      st.badges.push(badge);
+      UI.toast(`🏅 Lencana Baharu: ${badge}!`, 'gold');
+    }
+    if (crystalId && !st.crystals.includes(crystalId)) {
+      st.crystals.push(crystalId);
+      const w = WORLDS_DATA.find(x => x.id === crystalId);
+      UI.toast(`💎 ${w ? w.crystalName : 'Kristal'} Diperoleh! (${st.crystals.length}/6)`, 'cyan');
+      if (st.crystals.length === 6) {
+        st.avatar.crownUnlocked = true;
+        UI.toast('👑 SEMUA 6 KRISTAL TERKUMPUL! Bos Akhir telah dibuka di Hab Utama!', 'gold');
+      }
+    }
+    this.saveAll();
+    UI.updateHUD();
+  },
+
+  recordTopicAnswer(topicId, isCorrect) {
+    const st = this.getStudent();
+    if (!st || !st.topicStats[topicId]) return;
+    st.topicStats[topicId].total += 1;
+    if (isCorrect) st.topicStats[topicId].correct += 1;
+    this.saveAll();
+  }
+};
+
+/* ============================================================================
+ * 5. 3D BLOCKY AVATAR & ROBLOX-INSPIRED THREE.JS ENGINE
+ * ============================================================================ */
+const Engine3D = {
+  scene: null,
+  camera: null,
+  renderer: null,
+  clock: new THREE.Clock(),
+  playerGroup: null,
+  playerRig: null,
+  playerPos: new THREE.Vector3(0, 0, 8),
+  playerVel: new THREE.Vector3(0, 0, 0),
+  playerRotY: 0,
+  isGrounded: true,
+  currentEmote: null,
+  emoteTimer: 0,
+
+  // Camera orbit
+  camYaw: 0,
+  camPitch: 0.36,
+  camDist: 10.5,
+  isDraggingCam: false,
+  lastPointer: { x: 0, y: 0 },
+
+  // Controls
+  keys: {},
+  joyVec: { x: 0, y: 0 },
+
+  // World entities
+  worldGroup: null,
+  interactables: [], // { mesh, type, label, icon, radius, data, collected }
+  coins: [],
+  platforms: [], // { minX, maxX, minZ, maxZ, topY }
+  animatedObjects: [],
+  activePrompt: null,
+  modalOpen: false,
+
+  init() {
+    const container = document.getElementById('game-canvas-container');
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x0ea5e9);
+    this.scene.fog = new THREE.Fog(0x0ea5e9, 38, 105);
+
+    this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 200);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(this.renderer.domElement);
+
+    // Lighting
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x334155, 0.78);
+    this.scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xfffbeb, 0.95);
+    dir.position.set(22, 36, 20);
+    dir.castShadow = true;
+    dir.shadow.mapSize.width = 1024;
+    dir.shadow.mapSize.height = 1024;
+    dir.shadow.camera.near = 2;
+    dir.shadow.camera.far = 110;
+    const d = 38;
+    dir.shadow.camera.left = -d; dir.shadow.camera.right = d;
+    dir.shadow.camera.top = d; dir.shadow.camera.bottom = -d;
+    this.scene.add(dir);
+
+    this.worldGroup = new THREE.Group();
+    this.scene.add(this.worldGroup);
+
+    // Build initial avatar
+    this.rebuildPlayerAvatar(DefaultAvatar);
+
+    // Setup creator showcase pedestal
+    this.buildCreatorStage();
+
+    // Events
+    window.addEventListener('resize', () => this.onResize());
+    window.addEventListener('keydown', e => this.onKeyDown(e));
+    window.addEventListener('keyup', e => { this.keys[e.code] = false; });
+
+    // Camera mouse/touch drag on canvas
+    const dom = this.renderer.domElement;
+    dom.addEventListener('pointerdown', e => {
+      if (this.modalOpen) return;
+      this.isDraggingCam = true;
+      this.lastPointer = { x: e.clientX, y: e.clientY };
+    });
+    window.addEventListener('pointermove', e => {
+      if (!this.isDraggingCam) return;
+      const dx = e.clientX - this.lastPointer.x;
+      const dy = e.clientY - this.lastPointer.y;
+      this.lastPointer = { x: e.clientX, y: e.clientY };
+      if (GameState.inCreator && this.playerGroup) {
+        this.playerGroup.rotation.y += dx * 0.01;
+      } else {
+        this.camYaw -= dx * 0.006;
+        this.camPitch = Math.max(0.12, Math.min(0.95, this.camPitch + dy * 0.005));
+      }
+    });
+    window.addEventListener('pointerup', () => { this.isDraggingCam = false; });
+
+    this.setupJoystick();
+    this.animate();
+  },
+
+  onResize() {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  },
+
+  onKeyDown(e) {
+    if (this.modalOpen || GameState.inCreator) return;
+    this.keys[e.code] = true;
+    if (e.code === 'Space') { e.preventDefault(); this.triggerJump(); }
+    if (e.code === 'KeyF' || e.code === 'Enter') { this.triggerInteract(); }
+    if (e.code === 'KeyE') { this.triggerEmote('dance'); }
+    if (e.code === 'KeyM') { UI.openWorldMap(); }
+  },
+
+  setupJoystick() {
+    const zone = document.getElementById('joystick-zone');
+    const knob = document.getElementById('joystick-knob');
+    let active = false;
+    const maxR = 38;
+
+    const updateStick = (clientX, clientY) => {
+      const rect = zone.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      let dx = clientX - cx;
+      let dy = clientY - cy;
+      const dist = Math.hypot(dx, dy);
+      if (dist > maxR) { dx = (dx / dist) * maxR; dy = (dy / dist) * maxR; }
+      knob.style.transform = `translate(${dx}px, ${dy}px)`;
+      this.joyVec.x = dx / maxR;
+      this.joyVec.y = dy / maxR;
+    };
+
+    zone.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      active = true;
+      zone.setPointerCapture(e.pointerId);
+      updateStick(e.clientX, e.clientY);
+    });
+    zone.addEventListener('pointermove', e => {
+      if (!active) return;
+      e.stopPropagation();
+      updateStick(e.clientX, e.clientY);
+    });
+    const reset = () => {
+      active = false;
+      knob.style.transform = 'translate(0px, 0px)';
+      this.joyVec.x = 0; this.joyVec.y = 0;
+    };
+    zone.addEventListener('pointerup', reset);
+    zone.addEventListener('pointercancel', reset);
+  },
+
+  /* ---------- Build Blocky Roblox-Style 3D Character ---------- */
+  createBlockyCharacter(cfg, scale = 1) {
+    const group = new THREE.Group();
+    const matSkin = new THREE.MeshLambertMaterial({ color: cfg.skinColor || '#f5cba7' });
+    const matHair = new THREE.MeshLambertMaterial({ color: cfg.hairColor || '#1f2937' });
+    const matShirt = new THREE.MeshLambertMaterial({ color: cfg.shirtColor || '#2563eb' });
+    const matPants = new THREE.MeshLambertMaterial({ color: cfg.pantsColor || '#1e293b' });
+    const matShoe = new THREE.MeshLambertMaterial({ color: '#0f172a' });
+
+    // Legs (pivoted at hip)
+    const leftLegPivot = new THREE.Group(); leftLegPivot.position.set(-0.24, 0.9, 0);
+    const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.85, 0.42), matPants);
+    leftLeg.position.y = -0.42; leftLeg.castShadow = true;
+    const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.5), matShoe);
+    leftShoe.position.set(0, -0.82, 0.05);
+    leftLegPivot.add(leftLeg, leftShoe);
+
+    const rightLegPivot = new THREE.Group(); rightLegPivot.position.set(0.24, 0.9, 0);
+    const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.85, 0.42), matPants);
+    rightLeg.position.y = -0.42; rightLeg.castShadow = true;
+    const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.5), matShoe);
+    rightShoe.position.set(0, -0.82, 0.05);
+    rightLegPivot.add(rightLeg, rightShoe);
+
+    // Torso
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.98, 0.5), matShirt);
+    torso.position.y = 1.4; torso.castShadow = true;
+
+    // Explorer Badge on shirt
+    const badge = new THREE.Mesh(
+      new THREE.BoxGeometry(0.22, 0.22, 0.05),
+      new THREE.MeshLambertMaterial({ color: '#facc15' })
+    );
+    badge.position.set(0.22, 1.56, 0.26);
+
+    // Backpack
+    if (cfg.backpack && cfg.backpack !== 'none') {
+      const bpColor = cfg.backpack === 'scroll' ? '#92400e' : '#d97706';
+      const bp = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.72, 0.32), new THREE.MeshLambertMaterial({ color: bpColor }));
+      bp.position.set(0, 1.42, -0.38); bp.castShadow = true;
+      group.add(bp);
+      if (cfg.backpack === 'scroll') {
+        const scroll = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.82, 8), new THREE.MeshLambertMaterial({ color: '#fef3c7' }));
+        scroll.rotation.z = Math.PI / 2;
+        scroll.position.set(0, 1.82, -0.38);
+        group.add(scroll);
+      }
+    }
+
+    // Arms (pivoted at shoulder)
+    const leftArmPivot = new THREE.Group(); leftArmPivot.position.set(-0.66, 1.82, 0);
+    const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.86, 0.36), matShirt);
+    leftArm.position.y = -0.36; leftArm.castShadow = true;
+    const leftHand = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 0.32), matSkin);
+    leftHand.position.y = -0.82;
+    leftArmPivot.add(leftArm, leftHand);
+
+    const rightArmPivot = new THREE.Group(); rightArmPivot.position.set(0.66, 1.82, 0);
+    const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.86, 0.36), matShirt);
+    rightArm.position.y = -0.36; rightArm.castShadow = true;
+    const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 0.32), matSkin);
+    rightHand.position.y = -0.82;
+    rightArmPivot.add(rightArm, rightHand);
+
+    // Head
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 2.26, 0);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.72, 0.74), matSkin);
+    head.castShadow = true;
+    headGroup.add(head);
+
+    // Eyes & Smile
+    const eyeMat = new THREE.MeshBasicMaterial({ color: '#0f172a' });
+    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.13, 0.05), eyeMat);
+    eyeL.position.set(-0.15, 0.06, 0.37);
+    const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.13, 0.05), eyeMat);
+    eyeR.position.set(0.15, 0.06, 0.37);
+    const smile = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.05), new THREE.MeshBasicMaterial({ color: '#7f1d1d' }));
+    smile.position.set(0, -0.14, 0.37);
+    headGroup.add(eyeL, eyeR, smile);
+
+    // Hair Styles
+    const hs = cfg.hairStyle || 'spiky';
+    const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.22, 0.78), matHair);
+    hairTop.position.set(0, 0.38, 0);
+    headGroup.add(hairTop);
+    if (hs === 'spiky') {
+      for (let i = -1; i <= 1; i++) {
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.28, 4), matHair);
+        spike.position.set(i * 0.22, 0.56, 0.06);
+        headGroup.add(spike);
+      }
+    } else if (hs === 'bob') {
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.66, 0.25), matHair);
+      back.position.set(0, 0.04, -0.34);
+      headGroup.add(back);
+    } else if (hs === 'bun') {
+      const bun = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), matHair);
+      bun.position.set(0, 0.56, -0.15);
+      headGroup.add(bun);
+    } else if (hs === 'mohawk') {
+      const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.32, 0.76), matHair);
+      ridge.position.set(0, 0.56, 0);
+      headGroup.add(ridge);
+    } else if (hs === 'curly') {
+      for (let x = -0.26; x <= 0.26; x += 0.26) {
+        const puff = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), matHair);
+        puff.position.set(x, 0.48, 0.1);
+        headGroup.add(puff);
+      }
+    }
+
+    // Glasses
+    if (cfg.glasses && cfg.glasses !== 'none') {
+      const gColor = cfg.glasses === 'cool' ? '#38bdf8' : '#1e293b';
+      const gMat = new THREE.MeshLambertMaterial({ color: gColor });
+      const lensL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.08), gMat);
+      lensL.position.set(-0.17, 0.06, 0.4);
+      const lensR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.08), gMat);
+      lensR.position.set(0.17, 0.06, 0.4);
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.05, 0.08), gMat);
+      bridge.position.set(0, 0.08, 0.4);
+      headGroup.add(lensL, lensR, bridge);
+    }
+
+    // Hats
+    if (cfg.hat === 'explorer') {
+      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.08, 12), new THREE.MeshLambertMaterial({ color: '#b45309' }));
+      brim.position.set(0, 0.46, 0);
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.44, 0.34, 12), new THREE.MeshLambertMaterial({ color: '#92400e' }));
+      top.position.set(0, 0.64, 0);
+      headGroup.add(brim, top);
+    } else if (cfg.hat === 'cap') {
+      const dome = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.24, 0.78), new THREE.MeshLambertMaterial({ color: '#dc2626' }));
+      dome.position.set(0, 0.48, 0);
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.08, 0.42), new THREE.MeshLambertMaterial({ color: '#991b1b' }));
+      visor.position.set(0, 0.4, 0.46);
+      headGroup.add(dome, visor);
+    } else if (cfg.hat === 'wizard') {
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.9, 10), new THREE.MeshLambertMaterial({ color: '#6d28d9' }));
+      cone.position.set(0, 0.84, 0);
+      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.66, 0.07, 12), new THREE.MeshLambertMaterial({ color: '#facc15' }));
+      brim.position.set(0, 0.45, 0);
+      headGroup.add(cone, brim);
+    }
+
+    // Legendary Crown if unlocked
+    if (cfg.crownUnlocked) {
+      const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 0.25, 6), new THREE.MeshLambertMaterial({ color: '#fde047', emissive: '#ca8a04', emissiveIntensity: 0.4 }));
+      crown.position.set(0, 0.88, 0);
+      headGroup.add(crown);
+    }
+
+    group.add(leftLegPivot, rightLegPivot, torso, badge, leftArmPivot, rightArmPivot, headGroup);
+    group.scale.setScalar(scale);
+
+    return { group, leftLegPivot, rightLegPivot, leftArmPivot, rightArmPivot, headGroup, torso };
+  },
+
+  rebuildPlayerAvatar(cfg) {
+    if (this.playerGroup) this.scene.remove(this.playerGroup);
+    this.playerRig = this.createBlockyCharacter(cfg, 1);
+    this.playerGroup = this.playerRig.group;
+    this.playerGroup.position.copy(this.playerPos);
+    this.scene.add(this.playerGroup);
+  },
+
+  clearWorld() {
+    while (this.worldGroup.children.length > 0) {
+      this.worldGroup.remove(this.worldGroup.children[0]);
+    }
+    this.interactables = [];
+    this.coins = [];
+    this.platforms = [];
+    this.animatedObjects = [];
+    this.activePrompt = null;
+    document.getElementById('interact-prompt').classList.add('hidden');
+  },
+
+  buildCreatorStage() {
+    this.clearWorld();
+    this.scene.background = new THREE.Color(0x0f172a);
+    this.scene.fog = new THREE.Fog(0x0f172a, 18, 55);
+
+    const ped = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.3, 2.7, 0.6, 24),
+      new THREE.MeshLambertMaterial({ color: 0x334155 })
+    );
+    ped.position.set(0, -0.3, 0);
+    ped.receiveShadow = true;
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(2.35, 0.08, 10, 32),
+      new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.02;
+    this.worldGroup.add(ped, ring);
+
+    // Floating crystals around stage
+    WORLDS_DATA.forEach((w, idx) => {
+      const ang = (idx / WORLDS_DATA.length) * Math.PI * 2;
+      const cry = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.35, 0),
+        new THREE.MeshLambertMaterial({ color: w.crystalColor, emissive: w.crystalColor, emissiveIntensity: 0.45 })
+      );
+      cry.position.set(Math.cos(ang) * 4.5, 1.8 + (idx % 2) * 0.5, Math.sin(ang) * 4.5);
+      this.worldGroup.add(cry);
+      this.animatedObjects.push({ mesh: cry, type: 'floatSpin', baseY: cry.position.y, speed: 1.5 + idx * 0.1 });
+    });
+
+    this.playerPos.set(0, 0, 0);
+    if (this.playerGroup) {
+      this.playerGroup.position.set(0, 0, 0);
+      this.playerGroup.rotation.set(0, 0.25, 0);
+    }
+  },
+
+  /* ---------- Helper 3D Props ---------- */
+  addTree(x, z, scale = 1, leafColor = 0x16a34a) {
+    const g = new THREE.Group();
+    const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.7, 2.4, 0.7), new THREE.MeshLambertMaterial({ color: 0x78350f }));
+    trunk.position.y = 1.2; trunk.castShadow = true;
+    const leaves = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.2, 2.4), new THREE.MeshLambertMaterial({ color: leafColor }));
+    leaves.position.y = 3.0; leaves.castShadow = true;
+    g.add(trunk, leaves);
+    g.position.set(x, 0, z);
+    g.scale.setScalar(scale);
+    this.worldGroup.add(g);
+  },
+
+  addPlatform(x, y, z, w, h, d, color = 0xf59e0b) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color }));
+    mesh.position.set(x, y - h / 2, z);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    this.worldGroup.add(mesh);
+    this.platforms.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, topY: y });
+    return mesh;
+  },
+
+  addCoin(x, y, z) {
+    const coin = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.42, 0.42, 0.12, 12),
+      new THREE.MeshLambertMaterial({ color: 0xfde047, emissive: 0xca8a04, emissiveIntensity: 0.45 })
+    );
+    coin.rotation.x = Math.PI / 2;
+    coin.position.set(x, y, z);
+    this.worldGroup.add(coin);
+    this.coins.push({ mesh: coin, collected: false });
+  },
+
+  addChest(x, y, z, rewardCoins = 25, label = 'Buka Peti Harta Karun') {
+    const g = new THREE.Group();
+    const base = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.75, 0.85), new THREE.MeshLambertMaterial({ color: 0x92400e }));
+    base.position.y = 0.38; base.castShadow = true;
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.26, 0.88), new THREE.MeshLambertMaterial({ color: 0xf59e0b }));
+    lid.position.y = 0.86;
+    const lock = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.25, 0.1), new THREE.MeshLambertMaterial({ color: 0xfef08a }));
+    lock.position.set(0, 0.72, 0.45);
+    g.add(base, lid, lock);
+    g.position.set(x, y, z);
+    this.worldGroup.add(g);
+    this.interactables.push({
+      mesh: g, type: 'chest', label, icon: '🧰', radius: 2.8, collected: false, data: { coins: rewardCoins }
+    });
+  },
+
+  addNPC(x, y, z, name, cfg, type, data, icon = '💬') {
+    const rig = this.createBlockyCharacter(cfg, 1.05);
+    rig.group.position.set(x, y, z);
+    // Floating marker above NPC
+    const marker = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.28, 0),
+      new THREE.MeshBasicMaterial({ color: 0xfde047 })
+    );
+    marker.position.y = 3.45;
+    rig.group.add(marker);
+    this.animatedObjects.push({ mesh: marker, type: 'floatSpin', baseY: 3.45, speed: 2.5 });
+    this.worldGroup.add(rig.group);
+    this.interactables.push({
+      mesh: rig.group, type, label: `Bercakap dengan ${name}`, icon, radius: 3.5, data: { name, ...data }
+    });
+    return rig.group;
+  },
+
+  addBoss3D(x, y, z, name, colorHex, worldId) {
+    const g = new THREE.Group();
+    const matBody = new THREE.MeshLambertMaterial({ color: colorHex, emissive: colorHex, emissiveIntensity: 0.25 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 2.4, 1.4), matBody);
+    body.position.y = 2.0; body.castShadow = true;
+    const head = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.3, 1.3), new THREE.MeshLambertMaterial({ color: 0x1e293b }));
+    head.position.y = 3.9; head.castShadow = true;
+    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.2, 0.1), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+    eyeL.position.set(-0.32, 4.0, 0.66);
+    const eyeR = eyeL.clone(); eyeR.position.x = 0.32;
+    const aura = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.1, 8, 28), new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
+    aura.rotation.x = Math.PI / 2; aura.position.y = 0.2;
+    g.add(body, head, eyeL, eyeR, aura);
+    g.position.set(x, y, z);
+    this.worldGroup.add(g);
+    this.animatedObjects.push({ mesh: aura, type: 'spinZ', speed: 1.5 });
+    this.interactables.push({
+      mesh: g, type: 'boss', label: `⚔️ Cabar ${name}!`, icon: '⚔️', radius: 4.5, data: { worldId, name }
+    });
+    return g;
+  },
+
+  /* ---------- Trigger Controls ---------- */
+  triggerJump() {
+    if (this.modalOpen || GameState.inCreator) return;
+    if (this.isGrounded) {
+      this.playerVel.y = 12.2;
+      this.isGrounded = false;
+      SoundFX.play('jump');
+    }
+  },
+
+  triggerEmote(type) {
+    this.currentEmote = type;
+    this.emoteTimer = 2.4;
+    if (!GameState.inCreator) SoundFX.play('coin');
+  },
+
+  triggerInteract() {
+    if (!this.activePrompt || this.modalOpen) return;
+    const item = this.activePrompt;
+    SoundFX.play('hit');
+    if (item.type === 'portal') {
+      WorldManager.enterWorld(item.data.worldId);
+    } else if (item.type === 'finalBoss') {
+      UI.openFinalBoss();
+    } else if (item.type === 'guardian') {
+      UI.openGuardianDialog();
+    } else if (item.type === 'chest') {
+      if (item.collected) return;
+      item.collected = true;
+      item.mesh.visible = false;
+      SoundFX.play('chest');
+      GameState.addReward({ score: 15, coins: item.data.coins });
+      UI.toast(`🧰 Peti Dibuka! +${item.data.coins} Syiling Emas & +15 Mata!`, 'gold');
+    } else if (item.type === 'collectible') {
+      if (item.collected) return;
+      item.collected = true;
+      item.mesh.visible = false;
+      const { newlyCompletedWorld } = GameState.recordArtefactCollected(GameState.currentWorldId, item.data.idx);
+      SoundFX.play('chest');
+      GameState.addReward({ score: 10, coins: 10 });
+      const w = WORLDS_DATA.find(x => x.id === GameState.currentWorldId);
+      const comp = GameState.getWorldCompletion(GameState.currentWorldId);
+      UI.toast(`✨ ${w.collectibleName} Ditemui! (${comp.collected}/${w.collectibleCount}) • Kemajuan ${comp.percentage}%`, 'emerald');
+      if (newlyCompletedWorld) {
+        SoundFX.play('victory');
+        Confetti.burst();
+      }
+      WorldManager.updateWorldObjective();
+    } else if (item.type === 'worldNpc') {
+      UI.openWorldNPC(item.data);
+    } else if (item.type === 'historianNpc') {
+      UI.openHistorianTalk(item.data);
+    } else if (item.type === 'miniGameStation') {
+      MiniGames.openForWorld(GameState.currentWorldId);
+    } else if (item.type === 'boss') {
+      BossBattle.startMiniBoss(item.data.worldId);
+    }
+  },
+
+  /* ---------- Main 60FPS Animation Loop ---------- */
+  animate() {
+    requestAnimationFrame(() => this.animate());
+    const dt = Math.min(this.clock.getDelta(), 0.05);
+    const t = this.clock.elapsedTime;
+
+    // Animate scenery props
+    for (const a of this.animatedObjects) {
+      if (a.type === 'floatSpin') {
+        a.mesh.position.y = a.baseY + Math.sin(t * a.speed) * 0.28;
+        a.mesh.rotation.y += dt * 1.4;
+      } else if (a.type === 'spinZ') {
+        a.mesh.rotation.z += dt * a.speed;
+      } else if (a.type === 'spinY') {
+        a.mesh.rotation.y += dt * a.speed;
+      }
+    }
+
+    if (GameState.inCreator) {
+      // Creator camera & avatar preview
+      this.camera.position.set(0, 2.3, 6.2);
+      this.camera.lookAt(0, 1.35, 0);
+      if (this.playerGroup && !this.isDraggingCam) {
+        this.playerGroup.rotation.y += dt * 0.35;
+      }
+      this.animateAvatarLimbs(dt, t, this.currentEmote === 'walk' || this.currentEmote === 'run', this.currentEmote === 'run');
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+
+    // Movement vector
+    let moveX = this.joyVec.x;
+    let moveZ = this.joyVec.y;
+    if (!this.modalOpen) {
+      if (this.keys['KeyW'] || this.keys['ArrowUp']) moveZ -= 1;
+      if (this.keys['KeyS'] || this.keys['ArrowDown']) moveZ += 1;
+      if (this.keys['KeyA'] || this.keys['ArrowLeft']) moveX -= 1;
+      if (this.keys['KeyD'] || this.keys['ArrowRight']) moveX += 1;
+    }
+
+    const isMoving = Math.hypot(moveX, moveZ) > 0.1;
+    const isRunning = this.keys['ShiftLeft'] || this.keys['ShiftRight'];
+    const speed = isRunning ? 14.5 : 9.8;
+
+    if (isMoving && !this.modalOpen) {
+      const len = Math.hypot(moveX, moveZ);
+      moveX /= len; moveZ /= len;
+      // Rotate movement relative to camera yaw
+      const sin = Math.sin(this.camYaw);
+      const cos = Math.cos(this.camYaw);
+      const worldDX = moveX * cos + moveZ * sin;
+      const worldDZ = -moveX * sin + moveZ * cos;
+
+      this.playerPos.x += worldDX * speed * dt;
+      this.playerPos.z += worldDZ * speed * dt;
+      // Boundary clamp
+      const limit = 34;
+      this.playerPos.x = Math.max(-limit, Math.min(limit, this.playerPos.x));
+      this.playerPos.z = Math.max(-limit, Math.min(limit, this.playerPos.z));
+
+      this.playerRotY = Math.atan2(worldDX, worldDZ);
+      this.currentEmote = null;
+    }
+
+    // Gravity & Platform Collision
+    this.playerVel.y -= 29 * dt;
+    let nextY = this.playerPos.y + this.playerVel.y * dt;
+    let groundY = 0;
+
+    for (const p of this.platforms) {
+      if (this.playerPos.x >= p.minX - 0.4 && this.playerPos.x <= p.maxX + 0.4 &&
+          this.playerPos.z >= p.minZ - 0.4 && this.playerPos.z <= p.maxZ + 0.4) {
+        if (this.playerPos.y >= p.topY - 0.45 && this.playerVel.y <= 0) {
+          groundY = Math.max(groundY, p.topY);
+        }
+      }
+    }
+
+    if (nextY <= groundY) {
+      nextY = groundY;
+      this.playerVel.y = 0;
+      this.isGrounded = true;
+    } else {
+      this.isGrounded = false;
+    }
+    this.playerPos.y = nextY;
+
+    if (this.playerGroup) {
+      this.playerGroup.position.copy(this.playerPos);
+      this.playerGroup.rotation.y = this.playerRotY;
+    }
+
+    this.animateAvatarLimbs(dt, t, isMoving, isRunning);
+
+    // Collect floating coins automatically
+    for (const c of this.coins) {
+      if (c.collected) continue;
+      c.mesh.rotation.z += dt * 3;
+      if (c.mesh.position.distanceTo(this.playerPos) < 1.9) {
+        c.collected = true;
+        c.mesh.visible = false;
+        SoundFX.play('coin');
+        GameState.addReward({ coins: 5, score: 2 });
+      }
+    }
+
+    // Check nearest interactable
+    let nearest = null;
+    let bestDist = Infinity;
+    for (const item of this.interactables) {
+      if (item.collected) continue;
+      const d = item.mesh.position.distanceTo(this.playerPos);
+      if (d < item.radius && d < bestDist) {
+        bestDist = d;
+        nearest = item;
+      }
+    }
+    this.activePrompt = nearest;
+    const promptEl = document.getElementById('interact-prompt');
+    if (nearest && !this.modalOpen) {
+      promptEl.classList.remove('hidden');
+      document.getElementById('interact-prompt-icon').textContent = nearest.icon;
+      document.getElementById('interact-prompt-text').textContent = `${nearest.label} [F]`;
+    } else {
+      promptEl.classList.add('hidden');
+    }
+
+    // Smooth Third-Person Camera
+    const targetCamX = this.playerPos.x + Math.sin(this.camYaw) * Math.cos(this.camPitch) * this.camDist;
+    const targetCamY = this.playerPos.y + 2.2 + Math.sin(this.camPitch) * this.camDist;
+    const targetCamZ = this.playerPos.z + Math.cos(this.camYaw) * Math.cos(this.camPitch) * this.camDist;
+    this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.14);
+    this.camera.lookAt(this.playerPos.x, this.playerPos.y + 1.8, this.playerPos.z);
+
+    this.renderer.render(this.scene, this.camera);
+  },
+
+  animateAvatarLimbs(dt, t, isMoving, isRunning) {
+    if (!this.playerRig) return;
+    const r = this.playerRig;
+
+    if (this.emoteTimer > 0) {
+      this.emoteTimer -= dt;
+      if (this.emoteTimer <= 0 && !GameState.inCreator) this.currentEmote = null;
+    }
+
+    if (this.currentEmote === 'dance') {
+      r.leftArmPivot.rotation.z = -2.2 + Math.sin(t * 10) * 0.5;
+      r.rightArmPivot.rotation.z = 2.2 - Math.sin(t * 10) * 0.5;
+      r.leftLegPivot.rotation.x = Math.sin(t * 10) * 0.4;
+      r.rightLegPivot.rotation.x = -Math.sin(t * 10) * 0.4;
+      r.headGroup.rotation.z = Math.sin(t * 5) * 0.2;
+      return;
+    }
+    if (this.currentEmote === 'celebrate') {
+      r.leftArmPivot.rotation.z = -2.7;
+      r.rightArmPivot.rotation.z = 2.7;
+      r.leftArmPivot.rotation.x = Math.sin(t * 12) * 0.25;
+      r.rightArmPivot.rotation.x = -Math.sin(t * 12) * 0.25;
+      if (GameState.inCreator && this.playerGroup) {
+        this.playerGroup.position.y = Math.abs(Math.sin(t * 7)) * 0.6;
+      }
+      return;
+    }
+    if (this.currentEmote === 'jump' && GameState.inCreator) {
+      if (this.playerGroup) this.playerGroup.position.y = Math.abs(Math.sin(t * 6)) * 1.1;
+      r.leftArmPivot.rotation.x = -0.8;
+      r.rightArmPivot.rotation.x = -0.8;
+      return;
+    }
+
+    // Reset Z rotations
+    r.leftArmPivot.rotation.z = 0;
+    r.rightArmPivot.rotation.z = 0;
+    r.headGroup.rotation.z = 0;
+    if (GameState.inCreator && this.playerGroup) this.playerGroup.position.y = 0;
+
+    if (!this.isGrounded && !GameState.inCreator) {
+      r.leftArmPivot.rotation.x = -1.1;
+      r.rightArmPivot.rotation.x = -1.1;
+      r.leftLegPivot.rotation.x = 0.4;
+      r.rightLegPivot.rotation.x = -0.3;
+    } else if (isMoving) {
+      const freq = isRunning ? 14 : 9.5;
+      const amp = isRunning ? 0.95 : 0.65;
+      r.leftLegPivot.rotation.x = Math.sin(t * freq) * amp;
+      r.rightLegPivot.rotation.x = -Math.sin(t * freq) * amp;
+      r.leftArmPivot.rotation.x = -Math.sin(t * freq) * amp;
+      r.rightArmPivot.rotation.x = Math.sin(t * freq) * amp;
+    } else {
+      // Gentle idle breathing
+      r.leftLegPivot.rotation.x *= 0.85;
+      r.rightLegPivot.rotation.x *= 0.85;
+      r.leftArmPivot.rotation.x = Math.sin(t * 2.2) * 0.06;
+      r.rightArmPivot.rotation.x = -Math.sin(t * 2.2) * 0.06;
+    }
+  }
+};
+
+/* ============================================================================
+ * 6. WORLD MANAGER (HUB + 6 UNIQUE 3D TEXTBOOK ADVENTURE WORLDS)
+ * ============================================================================ */
+const WorldManager = {
+  enterHub() {
+    GameState.currentWorldId = 0;
+    Engine3D.clearWorld();
+    Engine3D.scene.background = new THREE.Color(0x38bdf8);
+    Engine3D.scene.fog = new THREE.Fog(0x38bdf8, 42, 110);
+
+    // Lush Village Ground
+    const ground = new THREE.Mesh(
+      new THREE.CylinderGeometry(38, 40, 1.5, 32),
+      new THREE.MeshLambertMaterial({ color: 0x22c55e })
+    );
+    ground.position.y = -0.75; ground.receiveShadow = true;
+    Engine3D.worldGroup.add(ground);
+
+    // River Ring & Wooden Bridges
+    const river = new THREE.Mesh(
+      new THREE.RingGeometry(12.5, 16.5, 40),
+      new THREE.MeshLambertMaterial({ color: 0x0284c7, side: THREE.DoubleSide })
+    );
+    river.rotation.x = -Math.PI / 2; river.position.y = 0.03;
+    Engine3D.worldGroup.add(river);
+
+    for (let i = 0; i < 4; i++) {
+      const ang = (i * Math.PI) / 2;
+      const bridge = new THREE.Mesh(
+        new THREE.BoxGeometry(3.4, 0.25, 5.4),
+        new THREE.MeshLambertMaterial({ color: 0xb45309 })
+      );
+      bridge.position.set(Math.sin(ang) * 14.5, 0.12, Math.cos(ang) * 14.5);
+      bridge.rotation.y = ang;
+      bridge.receiveShadow = true;
+      Engine3D.worldGroup.add(bridge);
+    }
+
+    // Central Sacred Crystal Altar
+    const altar = new THREE.Mesh(
+      new THREE.CylinderGeometry(4.2, 5.2, 0.8, 8),
+      new THREE.MeshLambertMaterial({ color: 0xe2e8f0 })
+    );
+    altar.position.y = 0.4; altar.receiveShadow = true;
+    Engine3D.worldGroup.add(altar);
+
+    const st = GameState.getStudent();
+
+    // 6 Crystal Pillars on Altar (lit only when world is 100% completed)
+    WORLDS_DATA.forEach((w, i) => {
+      const a = (i / WORLDS_DATA.length) * Math.PI * 2;
+      const px = Math.cos(a) * 3.1;
+      const pz = Math.sin(a) * 3.1;
+      const pillar = new THREE.Mesh(
+        new THREE.BoxGeometry(0.7, 1.5, 0.7),
+        new THREE.MeshLambertMaterial({ color: 0x94a3b8 })
+      );
+      pillar.position.set(px, 1.35, pz);
+      Engine3D.worldGroup.add(pillar);
+
+      const hasIt = GameState.getWorldCompletion(w.id).isCompleted;
+      const cry = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.45, 0),
+        new THREE.MeshLambertMaterial({
+          color: hasIt ? w.crystalColor : 0x475569,
+          emissive: hasIt ? w.crystalColor : 0x000000,
+          emissiveIntensity: hasIt ? 0.65 : 0
+        })
+      );
+      cry.position.set(px, 2.6, pz);
+      Engine3D.worldGroup.add(cry);
+      if (hasIt) Engine3D.animatedObjects.push({ mesh: cry, type: 'floatSpin', baseY: 2.6, speed: 2.2 });
+    });
+
+    const completedCrystalCount = GameState.getOverallCompletion().completedWorlds;
+
+    // Final Boss Portal in Center of Altar
+    const finalGate = new THREE.Mesh(
+      new THREE.TorusGeometry(1.4, 0.18, 10, 24),
+      new THREE.MeshLambertMaterial({
+        color: completedCrystalCount >= 6 ? 0xfacc15 : 0x64748b,
+        emissive: completedCrystalCount >= 6 ? 0xeab308 : 0x000000,
+        emissiveIntensity: 0.6
+      })
+    );
+    finalGate.position.set(0, 2.3, 0);
+    Engine3D.worldGroup.add(finalGate);
+    Engine3D.animatedObjects.push({ mesh: finalGate, type: 'spinY', speed: 0.9 });
+    Engine3D.interactables.push({
+      mesh: finalGate, type: 'finalBoss',
+      label: completedCrystalCount >= 6 ? '⚔️ MASUK BOS AKHIR (30 SOALAN)!' : `🔒 Bos Akhir (${completedCrystalCount}/6 Kristal)`,
+      icon: '👑', radius: 3.4, data: {}
+    });
+
+    // History Guardian NPC
+    Engine3D.addNPC(0, 0, 7.2, 'Penjaga Sejarah', {
+      skinColor: '#fde68a', hairStyle: 'bun', hairColor: '#e2e8f0',
+      shirtColor: '#7e22ce', pantsColor: '#3b0764', hat: 'wizard', backpack: 'scroll'
+    }, 'guardian', {}, '🧙');
+
+    // 6 Attractive 3D-Style Island Portals arranged around outer ring
+    WORLDS_DATA.forEach((w, idx) => {
+      const ang = (idx / WORLDS_DATA.length) * Math.PI * 2;
+      const rx = Math.cos(ang) * 24;
+      const rz = Math.sin(ang) * 24;
+      const comp = GameState.getWorldCompletion(w.id);
+      const done = comp.isCompleted;
+
+      const pGroup = new THREE.Group();
+      // Stepped circular dais
+      const base = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.9, 3.4, 0.55, 16),
+        new THREE.MeshLambertMaterial({ color: done ? 0xfacc15 : 0x334155 })
+      );
+      base.position.y = 0.28; base.receiveShadow = true;
+
+      // Twin flanking rune pillars
+      const pillarMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
+      const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(0.75, 4.4, 0.75), pillarMat);
+      leftPillar.position.set(-2.35, 2.4, 0); leftPillar.castShadow = true;
+      const rightPillar = new THREE.Mesh(new THREE.BoxGeometry(0.75, 4.4, 0.75), pillarMat);
+      rightPillar.position.set(2.35, 2.4, 0); rightPillar.castShadow = true;
+
+      // Glowing Portal Archway & Shimmering Vortex
+      const arch = new THREE.Mesh(
+        new THREE.TorusGeometry(2.2, 0.3, 12, 28),
+        new THREE.MeshLambertMaterial({ color: w.crystalColor, emissive: w.crystalColor, emissiveIntensity: 0.45 })
+      );
+      arch.position.y = 2.6;
+      const core = new THREE.Mesh(
+        new THREE.CircleGeometry(1.95, 24),
+        new THREE.MeshBasicMaterial({ color: w.crystalColor, transparent: true, opacity: 0.42, side: THREE.DoubleSide })
+      );
+      core.position.y = 2.6;
+
+      // Floating Crystal Beacon above portal
+      const beacon = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.55, 0),
+        new THREE.MeshLambertMaterial({
+          color: done ? 0xfacc15 : w.crystalColor,
+          emissive: done ? 0xeab308 : w.crystalColor,
+          emissiveIntensity: 0.65
+        })
+      );
+      beacon.position.y = 5.6;
+      Engine3D.animatedObjects.push({ mesh: beacon, type: 'floatSpin', baseY: 5.6, speed: 2.1 + idx * 0.15 });
+
+      pGroup.add(base, leftPillar, rightPillar, arch, core, beacon);
+      pGroup.position.set(rx, 0, rz);
+      pGroup.lookAt(0, 0, 0);
+      Engine3D.worldGroup.add(pGroup);
+
+      const statusTag = done ? '💎 Selesai 100%' : `${comp.percentage}% • Artefak ${comp.collected}/${w.collectibleCount}`;
+      Engine3D.interactables.push({
+        mesh: pGroup, type: 'portal',
+        label: `Dunia ${w.id}: ${w.name} (${statusTag})`,
+        icon: w.icon, radius: 4.0, data: { worldId: w.id }
+      });
+
+      // Decorative trees flanking portals
+      Engine3D.addTree(rx + Math.cos(ang + 0.35) * 5.2, rz + Math.sin(ang + 0.35) * 5.2, 1.1);
+    });
+
+    // Scatter Hub Coins & 2 Treasure Chests
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      Engine3D.addCoin(Math.cos(a) * 19, 1.1, Math.sin(a) * 19);
+    }
+    Engine3D.addChest(8.5, 0, -8.5, 20, 'Buka Peti Desa Purba');
+    Engine3D.addChest(-8.5, 0, 8.5, 20, 'Buka Peti Harta Pengembara');
+
+    // Reset player pos
+    Engine3D.playerPos.set(0, 0, 10.5);
+    Engine3D.playerRotY = Math.PI;
+    Engine3D.camYaw = 0;
+
+    document.getElementById('hud-notes-btn').classList.add('hidden');
+    document.getElementById('hud-hub-btn').classList.add('hidden');
+    UI.setHudTitle('🏡 Desa Sejarah Purba (Hab Utama)', 'Masuki mana-mana 6 portal dunia atau tekan Peta Dunia!');
+    UI.updateHUD();
+  },
+
+  enterWorld(worldId) {
+    const w = WORLDS_DATA.find(x => x.id === worldId);
+    if (!w) return;
+    GameState.currentWorldId = worldId;
+    const savedWp = GameState.getWorldProgress(worldId);
+    GameState.worldProgressTemp = {
+      collectedItems: [...savedWp.collectedItems],
+      collected: savedWp.collected,
+      miniGameDone: Boolean(savedWp.miniGameDone),
+      bossDefeated: Boolean(savedWp.bossDefeated)
+    };
+
+    Engine3D.clearWorld();
+    Engine3D.scene.background = new THREE.Color(w.skyColor);
+    Engine3D.scene.fog = new THREE.Fog(w.skyColor, 34, 95);
+
+    // Ground Island
+    const ground = new THREE.Mesh(
+      new THREE.CylinderGeometry(35, 36, 1.5, 28),
+      new THREE.MeshLambertMaterial({ color: w.groundColor })
+    );
+    ground.position.y = -0.75; ground.receiveShadow = true;
+    Engine3D.worldGroup.add(ground);
+
+    // Build Theme-Specific 3D Landmarks
+    this.buildThemeScenery(w);
+
+    // Guide NPC near spawn
+    Engine3D.addNPC(-4, 0, 10, w.npcName, {
+      skinColor: '#f5cba7', hairStyle: 'bob', hairColor: '#f8fafc',
+      shirtColor: w.hex, pantsColor: '#1e293b', hat: 'explorer', backpack: 'scroll'
+    }, 'worldNpc', { world: w }, '💬');
+
+    // Interactive Mini-Game Station (Glowing Pedestal)
+    const station = new THREE.Group();
+    const stBase = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.1, 2.8), new THREE.MeshLambertMaterial({ color: 0x1e293b }));
+    stBase.position.y = 0.55;
+    const stHolo = new THREE.Mesh(new THREE.OctahedronGeometry(0.95, 0), new THREE.MeshLambertMaterial({ color: w.crystalColor, emissive: w.crystalColor, emissiveIntensity: 0.6 }));
+    stHolo.position.y = 2.4;
+    station.add(stBase, stHolo);
+    station.position.set(10, 0, 2);
+    Engine3D.worldGroup.add(station);
+    Engine3D.animatedObjects.push({ mesh: stHolo, type: 'floatSpin', baseY: 2.4, speed: 2.2 });
+    Engine3D.interactables.push({
+      mesh: station, type: 'miniGameStation',
+      label: `🎮 Mula Cabaran: ${w.miniGameData.title}`,
+      icon: '🎮', radius: 3.8, data: { worldId: w.id }
+    });
+
+    // 3 Jumping Obby Platforms + 3 Individually Tracked Hidden Collectibles
+    const colPositions = [
+      { x: -12, y: 1.6, z: 2, plat: true },
+      { x: -14, y: 3.1, z: -6, plat: true },
+      { x: 12, y: 1.8, z: -10, plat: true }
+    ];
+    colPositions.forEach((p, idx) => {
+      if (p.plat) Engine3D.addPlatform(p.x, p.y - 0.8, p.z, 3.8, 0.7, 3.8, w.crystalColor);
+      if (idx === 1) Engine3D.addPlatform(-13, 1.5, -2, 2.8, 0.6, 2.8, 0xfacc15);
+
+      const alreadyCollected = Boolean(savedWp.collectedItems[idx]);
+      const colMesh = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(0.65, 0),
+        new THREE.MeshLambertMaterial({ color: 0xfde047, emissive: 0xeab308, emissiveIntensity: 0.5 })
+      );
+      colMesh.position.set(p.x, p.y + 0.5, p.z);
+      colMesh.visible = !alreadyCollected;
+      Engine3D.worldGroup.add(colMesh);
+      Engine3D.animatedObjects.push({ mesh: colMesh, type: 'floatSpin', baseY: p.y + 0.5, speed: 2.5 });
+      Engine3D.interactables.push({
+        mesh: colMesh, type: 'collectible',
+        label: `Kumpul ${w.collectibleName} #${idx + 1}`,
+        icon: '✨', radius: 2.8, collected: alreadyCollected, data: { idx }
+      });
+    });
+
+    // Mini-Boss at the Far North Monument
+    Engine3D.addBoss3D(0, 0, -18, w.bossName, w.crystalColor, w.id);
+
+    // Bonus Treasure Chests & Coins
+    Engine3D.addChest(15, 0, 12, 30, `Buka Peti ${w.name}`);
+    Engine3D.addChest(-16, 0, -14, 30, 'Buka Peti Rahsia');
+    for (let i = 0; i < 8; i++) {
+      Engine3D.addCoin((i - 3.5) * 3.5, 1.0, 6 - (i % 3) * 4);
+    }
+
+    // Spawn player
+    Engine3D.playerPos.set(0, 0, 16);
+    Engine3D.playerRotY = Math.PI;
+    Engine3D.camYaw = 0;
+
+    document.getElementById('hud-notes-btn').classList.remove('hidden');
+    document.getElementById('hud-hub-btn').classList.remove('hidden');
+    this.updateWorldObjective();
+    UI.openCurrentNotes(true);
+  },
+
+  buildThemeScenery(w) {
+    if (w.theme === 'library') {
+      // World 1: Giant Bookshelves, Floating Books & 5 Historian NPCs
+      for (let i = -2; i <= 2; i++) {
+        const shelf = new THREE.Mesh(new THREE.BoxGeometry(3.2, 7.5, 1.2), new THREE.MeshLambertMaterial({ color: 0x78350f }));
+        shelf.position.set(i * 9, 3.75, -24);
+        shelf.castShadow = true;
+        Engine3D.worldGroup.add(shelf);
+      }
+      for (let i = 0; i < 10; i++) {
+        const book = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.25, 0.8), new THREE.MeshLambertMaterial({ color: i % 2 ? 0xf59e0b : 0x38bdf8 }));
+        book.position.set(Math.sin(i * 1.2) * 16, 4.5 + (i % 3), Math.cos(i * 1.2) * 14);
+        Engine3D.worldGroup.add(book);
+        Engine3D.animatedObjects.push({ mesh: book, type: 'floatSpin', baseY: book.position.y, speed: 1.6 });
+      }
+      const historians = [
+        { name: 'Herodotus', quote: 'Sejarah ialah penceritaan tentang sebab berlaku sesuatu peristiwa!', color: '#f59e0b', x: -16, z: -8 },
+        { name: 'E.H. Carr', quote: 'Sejarah ialah proses perbincangan antara masa ini dengan masa lampau!', color: '#3b82f6', x: -8, z: -12 },
+        { name: 'Ibn Khaldun', quote: 'Sejarah ialah catatan peristiwa lampau dan perubahan sifat masyarakat!', color: '#10b981', x: 0, z: -9 },
+        { name: 'Muhd. Yusof Ibrahim', quote: 'Sejarah ialah masa lalu itu sendiri dan kejadian yang telah berlaku!', color: '#a855f7', x: 8, z: -12 },
+        { name: 'Khoo Kay Kim', quote: 'Sejarah ialah keseluruhan masa lepas dan bersifat objektif!', color: '#ef4444', x: 16, z: -8 }
+      ];
+      historians.forEach(h => {
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.1, 1.2, 12), new THREE.MeshLambertMaterial({ color: 0xfef3c7 }));
+        col.position.set(h.x, 0.6, h.z);
+        Engine3D.worldGroup.add(col);
+        Engine3D.addNPC(h.x, 1.2, h.z, h.name, {
+          skinColor: '#f5cba7', hairStyle: 'bob', hairColor: '#cbd5e1',
+          shirtColor: h.color, pantsColor: '#1e293b', hat: 'none', glasses: 'round'
+        }, 'historianNpc', h, '📜');
+      });
+    } else if (w.theme === 'iceage') {
+      // World 2: Evolusi Dunia — Glacial Icebergs, Snowy Peaks & Frozen Lake
+      const frozenLake = new THREE.Mesh(
+        new THREE.CircleGeometry(11, 28),
+        new THREE.MeshLambertMaterial({ color: 0x38bdf8 })
+      );
+      frozenLake.rotation.x = -Math.PI / 2;
+      frozenLake.position.set(0, 0.03, -4);
+      Engine3D.worldGroup.add(frozenLake);
+
+      for (let i = 0; i < 8; i++) {
+        const ang = (i / 8) * Math.PI * 2;
+        const berg = new THREE.Mesh(
+          new THREE.ConeGeometry(2.6 + (i % 2), 6.5 + (i % 3) * 1.5, 6),
+          new THREE.MeshLambertMaterial({ color: 0xbae6fd })
+        );
+        berg.position.set(Math.cos(ang) * 26, 3.2, Math.sin(ang) * 26);
+        berg.castShadow = true;
+        Engine3D.worldGroup.add(berg);
+      }
+    } else if (w.theme === 'prehistoric') {
+      // World 3: Kenali Zaman Prasejarah — Megalith Cave Arch, Campfire & Dolmens
+      const caveLeft = new THREE.Mesh(new THREE.BoxGeometry(3.5, 7, 4), new THREE.MeshLambertMaterial({ color: 0x57534e }));
+      caveLeft.position.set(-5.5, 3.5, -24);
+      const caveRight = caveLeft.clone(); caveRight.position.x = 5.5;
+      const caveTop = new THREE.Mesh(new THREE.BoxGeometry(15, 2.5, 4.5), new THREE.MeshLambertMaterial({ color: 0x44403c }));
+      caveTop.position.set(0, 7.5, -24);
+      Engine3D.worldGroup.add(caveLeft, caveRight, caveTop);
+
+      // Glowing Prehistoric Campfire
+      const fire = new THREE.Mesh(
+        new THREE.ConeGeometry(0.9, 1.8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xf97316 })
+      );
+      fire.position.set(0, 0.9, -4);
+      Engine3D.worldGroup.add(fire);
+      Engine3D.animatedObjects.push({ mesh: fire, type: 'floatSpin', baseY: 0.9, speed: 4.5 });
+    } else if (w.theme === 'ancientciv') {
+      // World 4: Tamadun Dunia — Golden Pyramid & Stepped Ziggurat
+      const pyramid = new THREE.Mesh(
+        new THREE.ConeGeometry(7.5, 9.5, 4),
+        new THREE.MeshLambertMaterial({ color: 0xfacc15 })
+      );
+      pyramid.position.set(-11, 4.75, -23);
+      pyramid.rotation.y = Math.PI / 4;
+      pyramid.castShadow = true;
+
+      const zig1 = new THREE.Mesh(new THREE.BoxGeometry(10, 2.2, 8), new THREE.MeshLambertMaterial({ color: 0xb45309 }));
+      zig1.position.set(11, 1.1, -23);
+      const zig2 = new THREE.Mesh(new THREE.BoxGeometry(6.8, 2.0, 5.5), new THREE.MeshLambertMaterial({ color: 0xd97706 }));
+      zig2.position.set(11, 3.2, -23);
+      const zig3 = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.8, 3.2), new THREE.MeshLambertMaterial({ color: 0xf59e0b }));
+      zig3.position.set(11, 5.1, -23);
+      Engine3D.worldGroup.add(pyramid, zig1, zig2, zig3);
+    } else if (w.theme === 'classical') {
+      // World 5: Peningkatan Tamadun — Classical Marble Colonnade & Roman Arch
+      for (let i = -3; i <= 3; i++) {
+        const col = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.65, 0.75, 7.2, 12),
+          new THREE.MeshLambertMaterial({ color: 0xf8fafc })
+        );
+        col.position.set(i * 4.2, 3.6, -24);
+        col.castShadow = true;
+        Engine3D.worldGroup.add(col);
+      }
+      const lintel = new THREE.Mesh(
+        new THREE.BoxGeometry(28, 1.4, 2.4),
+        new THREE.MeshLambertMaterial({ color: 0xe2e8f0 })
+      );
+      lintel.position.set(0, 7.8, -24);
+      Engine3D.worldGroup.add(lintel);
+    } else if (w.theme === 'islamic') {
+      // World 6: Legasi Tamadun Islam — Golden Mosque Dome, Minarets & Crescent Arch
+      const hall = new THREE.Mesh(new THREE.BoxGeometry(16, 6.5, 8), new THREE.MeshLambertMaterial({ color: 0xfef3c7 }));
+      hall.position.set(0, 3.25, -25);
+      const dome = new THREE.Mesh(
+        new THREE.SphereGeometry(4.6, 18, 14),
+        new THREE.MeshLambertMaterial({ color: 0xfacc15, emissive: 0xca8a04, emissiveIntensity: 0.3 })
+      );
+      dome.position.set(0, 7.6, -25);
+      const minL = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.85, 11, 12), new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+      minL.position.set(-10, 5.5, -24);
+      const minR = minL.clone(); minR.position.x = 10;
+      Engine3D.worldGroup.add(hall, dome, minL, minR);
+    }
+  },
+
+  updateWorldObjective() {
+    const w = WORLDS_DATA.find(x => x.id === GameState.currentWorldId);
+    if (!w) return;
+    const comp = GameState.getWorldCompletion(w.id);
+    const statusBadge = comp.isCompleted ? '💎 SELESAI 100%' : `${comp.percentage}%`;
+    const msg = `Artefak (${comp.collected}/${w.collectibleCount}) • Cabaran (${comp.challengeDone ? '✅' : '⏳'}) • Bos (${comp.bossDone ? '✅' : '⚔️'}) • [${statusBadge}]`;
+    UI.setHudTitle(`${w.icon} Dunia ${w.id}: ${w.name}`, msg);
+  }
+};
+
+/* ============================================================================
+ * 7. AVATAR CREATOR CONTROLLER
+ * ============================================================================ */
+const Creator = {
+  config: { ...DefaultAvatar },
+  palettes: {
+    skin: ['#fde2c4', '#f5cba7', '#e0ac69', '#c68642', '#8d5524'],
+    hairColor: ['#1f2937', '#78350f', '#f59e0b', '#dc2626', '#7e22ce', '#0284c7'],
+    shirtColor: ['#2563eb', '#e11d48', '#059669', '#d97706', '#7c3aed', '#0891b2'],
+    pantsColor: ['#1e293b', '#374151', '#1e3a8a', '#78350f', '#4c1d95']
+  },
+
+  init() {
+    this.renderSwatches('opt-skin', this.palettes.skin, 'skinColor');
+    this.renderSwatches('opt-hairColor', this.palettes.hairColor, 'hairColor');
+    this.renderSwatches('opt-shirtColor', this.palettes.shirtColor, 'shirtColor');
+    this.renderSwatches('opt-pantsColor', this.palettes.pantsColor, 'pantsColor');
+    this.refreshSavedProfiles();
+  },
+
+  renderSwatches(containerId, colors, key) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    colors.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'w-7 h-7 rounded-full border-2 border-white/80 shadow cursor-pointer hover:scale-110 transition';
+      btn.style.backgroundColor = c;
+      btn.onclick = () => {
+        this.config[key] = c;
+        this.updateAvatar();
+      };
+      el.appendChild(btn);
+    });
+  },
+
+  refreshSavedProfiles() {
+    const list = Object.values(GameState.students);
+    const box = document.getElementById('saved-profiles-box');
+    const sel = document.getElementById('select-saved-profile');
+    if (list.length === 0) { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    sel.innerHTML = '<option value="">-- Pilih Profil Murid Tersimpan --</option>' +
+      list.map(s => `<option value="${s.id}">${s.name} (⭐ ${s.score} | 💎 ${s.crystals.length}/6)</option>`).join('');
+  },
+
+  loadSelectedProfile(id) {
+    if (!id || !GameState.students[id]) return;
+    const st = GameState.students[id];
+    document.getElementById('input-player-name').value = st.name;
+    this.config = { ...DefaultAvatar, ...st.avatar };
+    document.getElementById('opt-hairStyle').value = this.config.hairStyle;
+    document.getElementById('opt-hat').value = this.config.hat;
+    document.getElementById('opt-glasses').value = this.config.glasses;
+    document.getElementById('opt-backpack').value = this.config.backpack;
+    Engine3D.rebuildPlayerAvatar(this.config);
+    UI.toast(`Profil ${st.name} dimuatkan!`, 'emerald');
+  },
+
+  updateAvatar() {
+    this.config.hairStyle = document.getElementById('opt-hairStyle').value;
+    this.config.hat = document.getElementById('opt-hat').value;
+    this.config.glasses = document.getElementById('opt-glasses').value;
+    this.config.backpack = document.getElementById('opt-backpack').value;
+    Engine3D.rebuildPlayerAvatar(this.config);
+    SoundFX.play('coin');
+  },
+
+  randomize() {
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    this.config.skinColor = pick(this.palettes.skin);
+    this.config.hairColor = pick(this.palettes.hairColor);
+    this.config.shirtColor = pick(this.palettes.shirtColor);
+    this.config.pantsColor = pick(this.palettes.pantsColor);
+    this.config.hairStyle = pick(['spiky', 'bob', 'bun', 'mohawk', 'curly']);
+    this.config.hat = pick(['explorer', 'cap', 'wizard', 'none']);
+    this.config.glasses = pick(['none', 'round', 'cool']);
+    this.config.backpack = pick(['explorer', 'scroll', 'none']);
+    document.getElementById('opt-hairStyle').value = this.config.hairStyle;
+    document.getElementById('opt-hat').value = this.config.hat;
+    document.getElementById('opt-glasses').value = this.config.glasses;
+    document.getElementById('opt-backpack').value = this.config.backpack;
+    Engine3D.rebuildPlayerAvatar(this.config);
+    SoundFX.play('jump');
+  },
+
+  previewAnim(anim) {
+    Engine3D.currentEmote = anim;
+    Engine3D.emoteTimer = 999;
+    SoundFX.play('hit');
+  },
+
+  startAdventure() {
+    SoundFX.init();
+    const nameInput = document.getElementById('input-player-name').value.trim();
+    if (!nameInput) {
+      UI.toast('Sila masukkan Nama Pengembara anda dahulu!', 'rose');
+      document.getElementById('input-player-name').focus();
+      return;
+    }
+    const st = GameState.createOrSelectStudent(nameInput, this.config);
+    GameState.inCreator = false;
+    Engine3D.currentEmote = null;
+    Engine3D.rebuildPlayerAvatar(st.avatar);
+
+    document.getElementById('screen-creator').classList.add('hidden');
+    document.getElementById('hud').classList.remove('hidden');
+    WorldManager.enterHub();
+    SoundFX.play('victory');
+    UI.toast(`Selamat datang, ${st.name}! Jelajahi 6 Dunia Sejarah Tingkatan 1!`, 'gold');
+  }
+};
+
+/* ============================================================================
+ * 8. INTERACTIVE MINI-GAMES (MATCHING, TIMELINE, DRAG-DROP, DETECTIVE)
+ * ============================================================================ */
+const MiniGames = {
+  openForWorld(worldId) {
+    const w = WORLDS_DATA.find(x => x.id === worldId);
+    if (!w) return;
+    if (w.miniGameType === 'wordMatch' || w.miniGameType === 'historianMatch') {
+      this.renderMatchingGame(w);
+    } else if (w.miniGameType === 'timeline') {
+      this.renderTimelineGame(w);
+    } else if (w.miniGameType === 'dragClassify') {
+      this.renderClassifyGame(w);
+    } else if (w.miniGameType === 'detectiveCase') {
+      this.renderDetectiveGame(w);
+    }
+  },
+
+  completeMiniGame(w) {
+    const { newlyCompletedWorld } = GameState.recordChallengeCompleted(w.id);
+    GameState.addReward({ score: 30, coins: 25, badge: `${w.icon} Juara Dunia ${w.id}` });
+    WorldManager.updateWorldObjective();
+    SoundFX.play('victory');
+    const comp = GameState.getWorldCompletion(w.id);
+    if (newlyCompletedWorld) {
+      Confetti.burst();
+      Engine3D.triggerEmote('celebrate');
+      UI.openModal(`🏆 Dunia ${w.id}: ${w.name} Selesai 100%!`, `
+        <div class="text-center space-y-4 py-4">
+          <div class="text-6xl animate-float">💎</div>
+          <h3 class="text-2xl font-bold text-amber-300">TAHNIAH! Semua Objektif Lengkap & ${w.crystalName} Diperoleh!</h3>
+          <p class="text-slate-200 text-sm">Artefak: <b>${comp.collected}/${w.collectibleCount}</b> • Cabaran: <b>✅</b> • Bos: <b>✅</b> • Kemajuan: <b>100%</b></p>
+          <div class="flex flex-wrap justify-center gap-3 pt-2">
+            <button onclick="UI.closeModal(); WorldManager.enterHub();" class="btn-game btn-gold px-6 py-2.5">🏡 Kembali ke Hab Utama</button>
+            <button onclick="UI.openWorldMap()" class="btn-game btn-sky px-6 py-2.5">🗺️ Pilih Dunia Seterusnya</button>
+          </div>
+        </div>
+      `);
+      return;
+    }
+    UI.openModal(`🎉 Cabaran Berjaya!`, `
+      <div class="text-center space-y-4 py-4">
+        <div class="text-6xl">🌟</div>
+        <h3 class="text-2xl font-bold text-amber-300">Syabas! Cabaran ${w.name} Selesai!</h3>
+        <p class="text-slate-200">Anda memperoleh <b>+30 Mata</b> dan <b>+25 Syiling Emas</b>! (Kemajuan Dunia: <b>${comp.percentage}%</b>)</p>
+        <p class="text-sm text-cyan-300">
+          ${!comp.artefactsDone ? `• Kumpul baki ${w.collectibleName} (${comp.collected}/${w.collectibleCount}) di platform 3D.<br>` : ''}
+          ${!comp.bossDone ? `• Tewaskan <b>${w.bossName}</b> di utara pulau ini untuk melengkapkan dunia!` : '• Kumpul semua 3 artefak untuk mengaktifkan Kristal Ilmu!'}
+        </p>
+        <div class="flex justify-center gap-3 pt-2">
+          <button onclick="UI.closeModal()" class="btn-game btn-emerald px-6 py-2.5">Teruskan Jelajah 3D</button>
+          ${!comp.bossDone ? `<button onclick="BossBattle.startMiniBoss(${w.id})" class="btn-game btn-gold px-6 py-2.5">⚔️ Cabar Bos Sekarang</button>` : ''}
+        </div>
+      </div>
+    `);
+  },
+
+  /* --- Matching + Word Puzzle --- */
+  renderMatchingGame(w) {
+    const data = w.miniGameData;
+    const shuffledRight = [...data.pairs].sort(() => Math.random() - 0.5);
+    let selectedLeft = null;
+    let matchedCount = 0;
+
+    const html = `
+      <p class="text-sm text-slate-200 mb-3">${data.instruction} <span class="text-amber-300 font-bold">(Klik kiri, kemudian klik padanan di kanan)</span></p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="match-grid">
+        <div class="space-y-2" id="match-left">
+          ${data.pairs.map((p, i) => `
+            <button data-idx="${i}" class="match-l-btn w-full text-left p-3 rounded-xl bg-slate-800 border-2 border-slate-600 hover:border-amber-400 font-bold text-sm transition">${p.left}</button>
+          `).join('')}
+        </div>
+        <div class="space-y-2" id="match-right">
+          ${shuffledRight.map((p) => `
+            <button data-right="${p.right}" class="match-r-btn w-full text-left p-3 rounded-xl bg-slate-800 border-2 border-slate-600 hover:border-sky-400 text-sm transition">${p.right}</button>
+          `).join('')}
+        </div>
+      </div>
+      ${data.puzzleWord ? `
+        <div id="bonus-word-box" class="hidden mt-5 p-4 rounded-2xl bg-indigo-950/70 border-2 border-amber-400/60">
+          <div class="text-sm font-bold text-amber-300 mb-1">🔐 Teka-Teki Kata Bonus:</div>
+          <p class="text-xs text-slate-200 mb-2">${data.puzzleClue}</p>
+          <div class="flex gap-2">
+            <input id="word-puzzle-input" type="text" placeholder="Taip jawapan di sini..." class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-500 text-white font-bold uppercase text-sm outline-none" />
+            <button id="word-puzzle-submit" class="btn-game btn-gold px-4 py-2 text-sm">Semak</button>
+          </div>
+          <div class="text-xs text-slate-400 mt-1.5">Petunjuk: Bermula dengan huruf <b>${data.puzzleWord[0]}</b> (${data.puzzleWord.length} huruf)</div>
+        </div>
+      ` : ''}
+    `;
+    UI.openModal(data.title, html);
+
+    document.querySelectorAll('.match-l-btn').forEach(btn => {
+      btn.onclick = () => {
+        if (btn.disabled) return;
+        document.querySelectorAll('.match-l-btn').forEach(b => b.classList.remove('border-amber-400', 'bg-amber-500/20'));
+        btn.classList.add('border-amber-400', 'bg-amber-500/20');
+        selectedLeft = parseInt(btn.dataset.idx, 10);
+      };
+    });
+
+    document.querySelectorAll('.match-r-btn').forEach(btn => {
+      btn.onclick = () => {
+        if (btn.disabled || selectedLeft === null) return;
+        const expectedRight = data.pairs[selectedLeft].right;
+        if (btn.dataset.right === expectedRight) {
+          SoundFX.play('correct');
+          GameState.recordTopicAnswer(w.id, true);
+          const lBtn = document.querySelector(`.match-l-btn[data-idx="${selectedLeft}"]`);
+          lBtn.disabled = true; btn.disabled = true;
+          lBtn.className = 'w-full text-left p-3 rounded-xl bg-emerald-600/40 border-2 border-emerald-400 font-bold text-sm text-emerald-100';
+          btn.className = 'w-full text-left p-3 rounded-xl bg-emerald-600/40 border-2 border-emerald-400 text-sm text-emerald-100';
+          selectedLeft = null;
+          matchedCount++;
+          if (matchedCount === data.pairs.length) {
+            if (data.puzzleWord) {
+              document.getElementById('bonus-word-box').classList.remove('hidden');
+              document.getElementById('word-puzzle-submit').onclick = () => {
+                const val = document.getElementById('word-puzzle-input').value.trim().toUpperCase();
+                if (val === data.puzzleWord) {
+                  this.completeMiniGame(w);
+                } else {
+                  SoundFX.play('wrong');
+                  UI.toast(`Cuba lagi! Petunjuk: ${data.puzzleWord.slice(0, 3)}...`, 'rose');
+                }
+              };
+            } else {
+              setTimeout(() => this.completeMiniGame(w), 500);
+            }
+          }
+        } else {
+          SoundFX.play('wrong');
+          GameState.recordTopicAnswer(w.id, false);
+          UI.toast('Padanan kurang tepat. Cuba semak Nota Ringkas dan cuba lagi!', 'rose');
+        }
+      };
+    });
+  },
+
+  /* --- Timeline Ordering (World 3) --- */
+  renderTimelineGame(w) {
+    const events = [...w.miniGameData.events].sort(() => Math.random() - 0.5);
+    let nextOrder = 1;
+
+    const html = `
+      <p class="text-sm text-slate-200 mb-3">${w.miniGameData.instruction}</p>
+      <div class="mb-3 p-3 rounded-xl bg-purple-950/60 border border-purple-400/50 text-xs text-purple-200">
+        Klik peristiwa mengikut urutan kronologi: <b id="tl-step" class="text-amber-300">Pilih Peristiwa #1 (Paling Awal)</b>
+      </div>
+      <div class="space-y-2.5" id="tl-list">
+        ${events.map(ev => `
+          <button data-order="${ev.order}" class="tl-btn w-full text-left p-3.5 rounded-xl bg-slate-800 border-2 border-slate-600 hover:border-amber-400 flex items-center justify-between gap-2 transition">
+            <span class="text-sm font-bold text-white">${ev.text}</span>
+            <span class="px-2.5 py-1 rounded-lg bg-purple-700 text-xs font-extrabold text-amber-200">${ev.year}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+    UI.openModal(w.miniGameData.title, html);
+
+    document.querySelectorAll('.tl-btn').forEach(btn => {
+      btn.onclick = () => {
+        if (btn.disabled) return;
+        const ord = parseInt(btn.dataset.order, 10);
+        if (ord === nextOrder) {
+          SoundFX.play('correct');
+          GameState.recordTopicAnswer(w.id, true);
+          btn.disabled = true;
+          btn.className = 'w-full text-left p-3.5 rounded-xl bg-emerald-600/40 border-2 border-emerald-400 flex items-center justify-between gap-2';
+          nextOrder++;
+          if (nextOrder > events.length) {
+            setTimeout(() => this.completeMiniGame(w), 500);
+          } else {
+            document.getElementById('tl-step').textContent = `Pilih Peristiwa #${nextOrder}`;
+          }
+        } else {
+          SoundFX.play('wrong');
+          GameState.recordTopicAnswer(w.id, false);
+          UI.toast('Bukan urutan itu! Lihat tahun yang paling awal dahulu.', 'rose');
+        }
+      };
+    });
+  },
+
+  /* --- Drag & Drop / Tap Classification (Worlds 4 & 5) --- */
+  renderClassifyGame(w) {
+    const data = w.miniGameData;
+    const items = [...data.items].sort(() => Math.random() - 0.5);
+    let selectedItemIdx = null;
+    let remaining = items.length;
+
+    const html = `
+      <p class="text-sm text-slate-200 mb-3">${data.instruction}</p>
+      <div class="flex flex-wrap gap-2 mb-4 p-3 rounded-2xl bg-slate-800/70 min-h-[72px]" id="classify-pool">
+        ${items.map((it, i) => `
+          <div draggable="true" data-idx="${i}" data-cat="${it.cat}"
+            class="drag-card px-3 py-2 rounded-xl bg-slate-700 border-2 border-slate-500 text-xs sm:text-sm font-bold text-white shadow">
+            ${it.text}
+          </div>
+        `).join('')}
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        ${data.categories.map(c => `
+          <div data-zone="${c.id}" class="drop-zone p-3.5 rounded-2xl bg-slate-900/70 min-h-[130px] flex flex-col gap-2 cursor-pointer">
+            <div class="font-game text-sm font-bold text-amber-300 text-center pb-1 border-b border-white/10">${c.label}</div>
+            <div class="zone-items flex flex-col gap-1.5"></div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    UI.openModal(data.title, html);
+
+    const handlePlace = (idx, zoneEl) => {
+      const card = document.querySelector(`.drag-card[data-idx="${idx}"]`);
+      if (!card || card.dataset.placed === '1') return;
+      const targetCat = zoneEl.dataset.zone;
+      if (card.dataset.cat === targetCat) {
+        SoundFX.play('correct');
+        GameState.recordTopicAnswer(w.id, true);
+        card.dataset.placed = '1';
+        card.draggable = false;
+        card.className = 'px-3 py-1.5 rounded-lg bg-emerald-600/50 border border-emerald-400 text-xs font-bold text-emerald-100';
+        zoneEl.querySelector('.zone-items').appendChild(card);
+        selectedItemIdx = null;
+        remaining--;
+        if (remaining === 0) setTimeout(() => this.completeMiniGame(w), 500);
+      } else {
+        SoundFX.play('wrong');
+        GameState.recordTopicAnswer(w.id, false);
+        UI.toast('Kategori tidak tepat! Fikirkan maksud setiap kategori dan cuba lagi.', 'rose');
+      }
+    };
+
+    document.querySelectorAll('.drag-card').forEach(card => {
+      card.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', card.dataset.idx);
+        selectedItemIdx = card.dataset.idx;
+      });
+      // Touch & click friendly selection
+      card.addEventListener('click', () => {
+        if (card.dataset.placed === '1') return;
+        document.querySelectorAll('.drag-card').forEach(c => c.classList.remove('border-amber-400', 'bg-amber-500/30'));
+        card.classList.add('border-amber-400', 'bg-amber-500/30');
+        selectedItemIdx = card.dataset.idx;
+      });
+    });
+
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        const idx = e.dataTransfer.getData('text/plain');
+        handlePlace(idx, zone);
+      });
+      zone.addEventListener('click', () => {
+        if (selectedItemIdx !== null) handlePlace(selectedItemIdx, zone);
+      });
+    });
+  },
+
+  /* --- Detective Evidence Case (World 7) --- */
+  renderDetectiveGame(w) {
+    const cases = w.miniGameData.cases;
+    let idx = 0;
+
+    const showCase = () => {
+      const c = cases[idx];
+      const html = `
+        <div class="space-y-4">
+          <div class="p-4 rounded-2xl bg-amber-500/15 border-2 border-amber-400/60 text-amber-100 text-sm font-bold">${c.evidence}</div>
+          <div class="text-base font-bold text-white">Kes ${idx + 1}/${cases.length}: ${c.question}</div>
+          <div class="space-y-2.5">
+            ${c.options.map((opt, i) => `
+              <button onclick="MiniGames._checkDet(${w.id}, ${i}, ${c.ans}, \`${c.explain}\`, ${idx})"
+                class="w-full text-left p-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-pink-400 text-sm font-bold transition">${opt}</button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      UI.openModal(w.miniGameData.title, html);
+    };
+
+    this._checkDet = (wid, chosen, ans, explain, curIdx) => {
+      if (chosen === ans) {
+        SoundFX.play('correct');
+        GameState.recordTopicAnswer(wid, true);
+        UI.toast(`✅ Tepat! ${explain}`, 'emerald');
+        idx = curIdx + 1;
+        if (idx >= cases.length) this.completeMiniGame(w);
+        else showCase();
+      } else {
+        SoundFX.play('wrong');
+        GameState.recordTopicAnswer(wid, false);
+        UI.toast('Kurang tepat! Baca bukti sumber dengan teliti dan cuba lagi.', 'rose');
+      }
+    };
+    showCase();
+  }
+};
+
+/* ============================================================================
+ * 9. MINI BOSS & 40-QUESTION FINAL BOSS ARENA
+ * ============================================================================ */
+const BossBattle = {
+  state: null,
+
+  startMiniBoss(worldId) {
+    const w = WORLDS_DATA.find(x => x.id === worldId);
+    if (!w) return;
+    this.state = {
+      isFinal: false,
+      world: w,
+      questions: w.bossQuestions,
+      qIndex: 0,
+      bossHP: w.bossQuestions.length,
+      maxHP: w.bossQuestions.length,
+      showHint: false,
+      feedback: null
+    };
+    this.renderBossUI();
+  },
+
+  startFinalBoss() {
+    // Shuffle 40 questions slightly within order or full 40
+    const qs = [...FINAL_BOSS_QUESTIONS];
+    this.state = {
+      isFinal: true,
+      questions: qs,
+      qIndex: 0,
+      correctCount: 0,
+      bossHP: qs.length,
+      maxHP: qs.length,
+      feedback: null
+    };
+    this.renderFinalBossUI();
+  },
+
+  renderBossUI() {
+    const s = this.state;
+    const q = s.questions[s.qIndex];
+    const hpPct = Math.round((s.bossHP / s.maxHP) * 100);
+
+    const html = `
+      <div class="space-y-4">
+        <!-- Boss HP Bar -->
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-rose-950/90 to-slate-900 border-2 border-rose-500/60 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="text-4xl">👹</div>
+            <div>
+              <div class="font-game text-lg text-rose-300 font-bold">${s.world.bossName}</div>
+              <div class="text-xs text-slate-300">Soalan ${s.qIndex + 1} daripada ${s.maxHP}</div>
+            </div>
+          </div>
+          <div class="w-40 sm:w-56">
+            <div class="text-xs font-bold text-right text-rose-200 mb-1">Tenaga Bos: ${hpPct}%</div>
+            <div class="w-full h-4 bg-slate-800 rounded-full overflow-hidden border border-white/20">
+              <div class="h-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-300" style="width:${hpPct}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question -->
+        <div class="p-4 rounded-2xl bg-slate-800/80 border border-white/15">
+          <div class="text-base sm:text-lg font-bold text-white mb-3">${q.q}</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            ${q.options.map((opt, idx) => `
+              <button onclick="BossBattle.answerMiniBoss(${idx})"
+                class="btn-game btn-slate text-left px-4 py-3 text-sm font-bold hover:brightness-110">
+                ${String.fromCharCode(65 + idx)}. ${opt}
+              </button>
+            `).join('')}
+          </div>
+          <div class="mt-3 flex items-center justify-between">
+            <button onclick="BossBattle.toggleHint()" class="text-xs font-bold text-amber-300 hover:underline">💡 Perlukan Petunjuk?</button>
+            ${s.showHint ? `<span class="text-xs text-amber-200 bg-amber-500/20 px-3 py-1 rounded-lg">${q.hint}</span>` : ''}
+          </div>
+        </div>
+
+        ${s.feedback ? `
+          <div class="p-3.5 rounded-xl ${s.feedback.ok ? 'bg-emerald-600/30 border-emerald-400' : 'bg-rose-600/30 border-rose-400'} border text-sm font-bold">
+            ${s.feedback.msg}
+          </div>
+        ` : ''}
+      </div>
+    `;
+    UI.openModal(`⚔️ Pertarungan Bos: ${s.world.name}`, html);
+  },
+
+  toggleHint() {
+    this.state.showHint = true;
+    this.renderBossUI();
+  },
+
+  answerMiniBoss(idx) {
+    const s = this.state;
+    const q = s.questions[s.qIndex];
+    if (idx === q.ans) {
+      SoundFX.play('correct');
+      GameState.recordTopicAnswer(s.world.id, true);
+      GameState.addReward({ score: 10, coins: 10 });
+      s.bossHP -= 1;
+      s.qIndex += 1;
+      s.showHint = false;
+      s.feedback = { ok: true, msg: `💥 Serangan Tepat! ${q.explain}` };
+      if (s.qIndex >= s.questions.length) {
+        // Boss Defeated!
+        GameState.recordBossDefeated(s.world.id);
+        GameState.addReward({ score: 50, coins: 40 });
+        WorldManager.updateWorldObjective();
+        const comp = GameState.getWorldCompletion(s.world.id);
+        SoundFX.play('victory');
+        Confetti.burst();
+        Engine3D.triggerEmote('celebrate');
+
+        if (comp.isCompleted) {
+          UI.openModal(`🏆 ${s.world.bossName} Ditewaskan!`, `
+            <div class="text-center space-y-4 py-4">
+              <div class="text-6xl animate-float">💎</div>
+              <h3 class="text-2xl font-bold text-amber-300">TAHNIAH! Dunia ${s.world.id} Selesai 100% & Anda Memperoleh ${s.world.crystalName}!</h3>
+              <p class="text-slate-200 text-sm">Artefak: <b>${comp.collected}/${s.world.collectibleCount}</b> • Cabaran: <b>✅</b> • Bos: <b>✅</b></p>
+              <p class="text-slate-200 text-sm">Ganjaran: <b>+50 Mata Bonus</b> & <b>+40 Syiling Emas</b></p>
+              <div class="flex flex-wrap justify-center gap-3 pt-2">
+                <button onclick="UI.closeModal(); WorldManager.enterHub();" class="btn-game btn-gold px-6 py-2.5">🏡 Kembali ke Hab Utama</button>
+                <button onclick="UI.openWorldMap()" class="btn-game btn-sky px-6 py-2.5">🗺️ Pilih Dunia Seterusnya</button>
+              </div>
+            </div>
+          `);
+        } else {
+          UI.openModal(`⚔️ ${s.world.bossName} Ditewaskan!`, `
+            <div class="text-center space-y-4 py-4">
+              <div class="text-5xl">🛡️</div>
+              <h3 class="text-xl font-bold text-amber-300">Bos Ditewaskan! (+50 Mata & +40 Syiling)</h3>
+              <p class="text-sm text-slate-200">Kemajuan Dunia ${s.world.id}: <b class="text-cyan-300">${comp.percentage}%</b>. Lengkapkan baki objektif berikut untuk membuka <b>${s.world.crystalName}</b>:</p>
+              <div class="max-w-sm mx-auto p-3 rounded-xl bg-slate-800/90 border border-white/15 text-left text-xs space-y-1.5 font-bold">
+                <div>${comp.artefactsDone ? '✅' : '⏳'} Kumpul ${s.world.collectibleName}: <span class="text-amber-300">${comp.collected}/${s.world.collectibleCount}</span></div>
+                <div>${comp.challengeDone ? '✅' : '⏳'} Selesaikan Cabaran Interaktif: <span class="text-amber-300">${comp.challengeDone ? 'Selesai' : 'Belum Selesai'}</span></div>
+                <div>✅ Tewaskan ${s.world.bossName}: <span class="text-emerald-400">Selesai</span></div>
+              </div>
+              <div class="flex flex-wrap justify-center gap-3 pt-2">
+                <button onclick="UI.closeModal()" class="btn-game btn-emerald px-6 py-2.5">🔍 Lengkapkan Objektif di Dunia Ini</button>
+                ${!comp.challengeDone ? `<button onclick="MiniGames.openForWorld(${s.world.id})" class="btn-game btn-sky px-5 py-2.5">🎮 Mula Cabaran</button>` : ''}
+              </div>
+            </div>
+          `);
+        }
+      } else {
+        this.renderBossUI();
+      }
+    } else {
+      SoundFX.play('wrong');
+      GameState.recordTopicAnswer(s.world.id, false);
+      s.feedback = { ok: false, msg: `❌ Kurang tepat! Penerangan: ${q.explain} — Cuba jawab semula!` };
+      this.renderBossUI();
+    }
+  },
+
+  /* --- 30-Question Final Boss (5 per Textbook World) --- */
+  renderFinalBossUI() {
+    const s = this.state;
+    const q = s.questions[s.qIndex];
+    const bossPct = Math.max(0, Math.round(((s.maxHP - s.correctCount) / s.maxHP) * 100));
+    const minPass = Math.ceil(s.maxHP * 0.8);
+
+    const html = `
+      <div class="space-y-4">
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-purple-950 via-rose-950 to-slate-900 border-2 border-amber-400 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="text-4xl">👑</div>
+            <div>
+              <div class="font-game text-lg text-amber-300 font-bold">BOS AKHIR: PENJAGA SEJARAH HILANG</div>
+              <div class="text-xs text-slate-200">Soalan <b>${s.qIndex + 1} / ${s.maxHP}</b> • Dunia ${q.t} • <span class="text-cyan-300">${q.type}</span></div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs font-bold text-emerald-300">Betul: ${s.correctCount} / ${s.qIndex} (Sasaran: 80% / ${minPass} Betul)</div>
+            <div class="w-44 h-3.5 bg-slate-800 rounded-full overflow-hidden mt-1 border border-white/20">
+              <div class="h-full bg-gradient-to-r from-amber-400 to-rose-500 transition-all" style="width:${bossPct}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-800/90 border border-white/15">
+          <div class="text-base sm:text-lg font-bold text-white mb-4">${q.q}</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            ${q.opts.map((opt, i) => `
+              <button onclick="BossBattle.answerFinal(${i})" class="btn-game btn-slate text-left px-4 py-3 text-sm font-bold">
+                ${String.fromCharCode(65 + i)}. ${opt}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        ${s.feedback ? `
+          <div class="p-3 rounded-xl ${s.feedback.ok ? 'bg-emerald-600/30 border-emerald-400' : 'bg-rose-600/30 border-rose-400'} border text-xs sm:text-sm font-bold">
+            ${s.feedback.msg}
+          </div>
+        ` : ''}
+      </div>
+    `;
+    UI.openModal('👑 PERTARUNGAN BOS AKHIR (40 SOALAN)', html);
+  },
+
+  answerFinal(idx) {
+    const s = this.state;
+    const q = s.questions[s.qIndex];
+    const isCorrect = idx === q.ans;
+    GameState.recordTopicAnswer(q.t, isCorrect);
+    if (isCorrect) {
+      s.correctCount += 1;
+      SoundFX.play('correct');
+      GameState.addReward({ score: 10, coins: 5 });
+      s.feedback = { ok: true, msg: `✅ Betul! ${q.exp}` };
+    } else {
+      SoundFX.play('wrong');
+      s.feedback = { ok: false, msg: `❌ Salah. Jawapan tepat: "${q.opts[q.ans]}". (${q.exp})` };
+    }
+    s.qIndex += 1;
+    if (s.qIndex >= s.questions.length) {
+      this.finishFinalBoss();
+    } else {
+      this.renderFinalBossUI();
+    }
+  },
+
+  finishFinalBoss() {
+    const s = this.state;
+    const pct = Math.round((s.correctCount / s.maxHP) * 100);
+    const passed = pct >= 80;
+    const minPass = Math.ceil(s.maxHP * 0.8);
+    const st = GameState.getStudent();
+    if (st) {
+      st.finalBossBest = Math.max(st.finalBossBest || 0, pct);
+      if (passed) {
+        st.finalBossPassed = true;
+        st.avatar.crownUnlocked = true;
+        GameState.addReward({ score: 200, coins: 200, badge: '🏆 LEGENDARY HISTORY MASTER' });
+        Engine3D.rebuildPlayerAvatar(st.avatar);
+      }
+      GameState.saveAll();
+    }
+
+    if (passed) {
+      SoundFX.play('victory');
+      Confetti.burst();
+      setTimeout(() => Confetti.burst(), 900);
+      UI.openVictoryCertificate(st.name, pct, s.correctCount, s.maxHP);
+    } else {
+      SoundFX.play('wrong');
+      UI.openModal('⚔️ Cuba Lagi, Pengembara!', `
+        <div class="text-center space-y-4 py-4">
+          <div class="text-5xl">🛡️</div>
+          <h3 class="text-xl font-bold text-amber-300">Skor Anda: ${s.correctCount}/${s.maxHP} (${pct}%)</h3>
+          <p class="text-sm text-slate-200">Anda memerlukan sekurang-kurangnya <b>80% (${minPass}/${s.maxHP})</b> untuk menewaskan Penjaga Sejarah Hilang. Ulang kaji Nota Ringkas dan cuba lagi!</p>
+          <div class="flex justify-center gap-3">
+            <button onclick="BossBattle.startFinalBoss()" class="btn-game btn-gold px-6 py-2.5">🔄 Cuba Semula</button>
+            <button onclick="UI.closeModal()" class="btn-game btn-slate px-6 py-2.5">Tutup</button>
+          </div>
+        </div>
+      `);
+    }
+  }
+};
+
+/* ============================================================================
+ * 10. UI MODALS, WORLD MAP, INVENTORY, CERTIFICATE & TEACHER CONTROL PANEL
+ * ============================================================================ */
+const UI = {
+  toast(msg, color = 'sky') {
+    const colors = {
+      gold: 'bg-amber-400 text-slate-950 border-amber-200',
+      emerald: 'bg-emerald-500 text-white border-emerald-200',
+      rose: 'bg-rose-500 text-white border-rose-200',
+      cyan: 'bg-cyan-500 text-slate-950 border-cyan-200',
+      sky: 'bg-sky-500 text-white border-sky-200'
+    };
+    const el = document.createElement('div');
+    el.className = `px-4 py-2.5 rounded-2xl border-2 font-bold text-xs sm:text-sm shadow-xl animate-pop text-center ${colors[color] || colors.sky}`;
+    el.textContent = msg;
+    const c = document.getElementById('toast-container');
+    c.appendChild(el);
+    setTimeout(() => { el.remove(); }, 3400);
+  },
+
+  setHudTitle(title, obj) {
+    document.getElementById('hud-world-title').textContent = title;
+    document.getElementById('hud-objective').textContent = obj;
+    document.getElementById('hud-world-title-mob').textContent = title;
+    document.getElementById('hud-objective-mob').textContent = obj;
+  },
+
+  updateHUD() {
+    const st = GameState.getStudent();
+    if (!st) return;
+    const completedCrystals = GameState.getOverallCompletion(st).completedWorlds;
+    document.getElementById('hud-player-name').textContent = st.name;
+    document.getElementById('hud-score').textContent = st.score;
+    document.getElementById('hud-coins').textContent = st.coins;
+    document.getElementById('hud-crystals').textContent = completedCrystals;
+  },
+
+  openModal(title, htmlContent) {
+    Engine3D.modalOpen = true;
+    document.getElementById('modal-title').innerHTML = title;
+    document.getElementById('modal-body').innerHTML = htmlContent;
+    document.getElementById('modal-backdrop').classList.remove('hidden');
+  },
+
+  closeModal() {
+    Engine3D.modalOpen = false;
+    document.getElementById('modal-backdrop').classList.add('hidden');
+  },
+
+  openCurrentNotes(isIntro = false) {
+    const w = WORLDS_DATA.find(x => x.id === GameState.currentWorldId);
+    if (!w) return;
+    this.openModal(`${w.icon} Nota Ringkas: ${w.topic}`, `
+      <div class="space-y-4">
+        <div class="p-4 rounded-2xl bg-slate-800/80 border-2 border-amber-400/50">
+          <div class="font-game text-base text-amber-300 mb-2">📌 Ilmu Penting Sebelum Misi:</div>
+          ${w.shortNote}
+        </div>
+        <div class="p-3.5 rounded-xl bg-sky-900/40 border border-sky-400/40 text-xs sm:text-sm text-sky-100">
+          <b>🎯 Misi Anda di ${w.name}:</b><br>
+          1. Kumpul 3 ${w.collectibleName} di platform 3D.<br>
+          2. Selesaikan Cabaran Interaktif di Stesen Kristal.<br>
+          3. Tewaskan <b>${w.bossName}</b> untuk mendapatkan <b>${w.crystalName}</b>!
+        </div>
+        <div class="flex justify-end gap-2">
+          <button onclick="UI.closeModal()" class="btn-game btn-emerald px-6 py-2.5">${isIntro ? '🚀 Mula Jelajah Dunia Ini!' : 'Tutup Nota'}</button>
+        </div>
+      </div>
+    `);
+  },
+
+  openGuardianDialog() {
+    const st = GameState.getStudent();
+    const overall = GameState.getOverallCompletion(st);
+    this.openModal('🧙 Penjaga Sejarah Purba', `
+      <div class="space-y-4 text-sm text-slate-200">
+        <p>"Salam sejahtera, <b>${st.name}</b>! Enam Kristal Ilmu Sejarah Tingkatan 1 telah tersebar ke 6 dunia utama di sekeliling desa ini."</p>
+        <p>"Untuk menamatkan setiap dunia (<b>100%</b>) dan mengaktifkan kristalnya, kamu perlu <b>mengumpul 3 artefak</b>, <b>menyelesaikan cabaran</b>, dan <b>menewaskan bos dunia</b>. Kemajuan keseluruhan kamu kini <b class="text-cyan-300">${overall.percentage}% (${overall.completedWorlds}/6 Kristal)</b>."</p>
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button onclick="UI.openWorldMap()" class="btn-game btn-sky px-5 py-2.5">🗺️ Buka Peta 6 Dunia</button>
+          <button onclick="UI.closeModal()" class="btn-game btn-emerald px-5 py-2.5">Baik, Saya Bersedia!</button>
+        </div>
+      </div>
+    `);
+  },
+
+  openWorldNPC(data) {
+    const w = data.world;
+    this.openModal(`💬 ${w.npcName}`, `
+      <div class="space-y-4">
+        <p class="text-sm sm:text-base text-slate-100 leading-relaxed">"${w.npcGreeting}"</p>
+        <div class="flex flex-wrap gap-2.5">
+          <button onclick="UI.openCurrentNotes()" class="btn-game btn-gold px-4 py-2 text-sm">📖 Baca Nota Ringkas</button>
+          <button onclick="MiniGames.openForWorld(${w.id})" class="btn-game btn-sky px-4 py-2 text-sm">🎮 Mula Cabaran</button>
+          <button onclick="UI.closeModal()" class="btn-game btn-slate px-4 py-2 text-sm">Tutup</button>
+        </div>
+      </div>
+    `);
+  },
+
+  openHistorianTalk(h) {
+    GameState.addReward({ score: 5, coins: 5 });
+    this.openModal(`🏛️ Tokoh Sejarawan: ${h.name}`, `
+      <div class="space-y-4 text-center py-2">
+        <div class="text-5xl">📜</div>
+        <h3 class="text-xl font-bold text-amber-300">${h.name}</h3>
+        <div class="p-4 rounded-2xl bg-slate-800 border-2 border-amber-400/50 text-base text-white font-bold">
+          "${h.quote}"
+        </div>
+        <p class="text-xs text-emerald-300 font-bold">+5 Mata & +5 Syiling Emas kerana menemui tokoh ini!</p>
+        <button onclick="UI.closeModal()" class="btn-game btn-emerald px-6 py-2">Ingat Pandangan Ini!</button>
+      </div>
+    `);
+  },
+
+  openWorldMap() {
+    const st = GameState.getStudent();
+    const overall = GameState.getOverallCompletion(st);
+    const html = `
+      <div class="mb-3 p-3 rounded-2xl bg-slate-800/90 border border-cyan-400/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="font-bold text-slate-200">
+          Kemajuan Keseluruhan: <span class="text-cyan-300 text-sm">${overall.percentage}%</span> • Dunia Selesai: <span class="text-emerald-300">${overall.completedWorlds}/6</span>
+        </div>
+        <div class="text-slate-300 font-bold">
+          Artefak: ${overall.totalArtefacts}/${overall.maxArtefacts} • Cabaran: ${overall.totalChallenges}/6 • Bos: ${overall.totalBosses}/6
+        </div>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-300 mb-3">Pilih mana-mana 6 dunia utama Sejarah Tingkatan 1 (lengkapkan 3 artefak, cabaran & bos untuk 100%):</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        ${WORLDS_DATA.map(w => {
+          const comp = GameState.getWorldCompletion(w.id, st);
+          const done = comp.isCompleted;
+          const pct = comp.percentage;
+          return `
+            <button onclick="UI.closeModal(); WorldManager.enterWorld(${w.id});"
+              class="p-3.5 rounded-2xl border-2 text-left flex flex-col gap-2 transition hover:scale-[1.01] ${done ? 'bg-emerald-900/40 border-emerald-400' : 'bg-slate-800/80 border-slate-600 hover:border-amber-400'}">
+              <div class="flex items-center justify-between gap-2 w-full">
+                <div class="flex items-center gap-3">
+                  <div class="text-3xl">${w.icon}</div>
+                  <div>
+                    <div class="font-game text-sm sm:text-base font-bold text-white">Dunia ${w.id}: ${w.name}</div>
+                    <div class="text-xs text-amber-300 font-bold">${w.topic}</div>
+                  </div>
+                </div>
+                <div class="text-xs font-extrabold px-2.5 py-1 rounded-lg shrink-0 ${done ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-200'}">
+                  ${done ? '💎 Selesai' : 'Masuk →'}
+                </div>
+              </div>
+              <div class="w-full space-y-1">
+                <div class="flex justify-between text-[11px] font-bold text-slate-300">
+                  <span>Artefak: ${comp.collected}/${w.collectibleCount} • Cabaran: ${comp.challengeDone ? '✅' : '⏳'} • Bos: ${comp.bossDone ? '✅' : '⚔️'}</span>
+                  <span class="${done ? 'text-emerald-300' : 'text-cyan-300'}">${pct}%</span>
+                </div>
+                <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+                  <div class="h-full ${done ? 'bg-emerald-400' : 'bg-amber-400'} transition-all" style="width:${pct}%"></div>
+                </div>
+              </div>
+            </button>
+          `;
+        }).join('')}
+      </div>
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-white/15">
+        <button onclick="UI.closeModal(); WorldManager.enterHub();" class="btn-game btn-slate px-4 py-2 text-sm">🏡 Kembali ke Hab Utama</button>
+        <button onclick="UI.openFinalBoss()" class="btn-game btn-gold px-5 py-2 text-sm">
+          👑 Bos Akhir (${overall.completedWorlds}/6 Kristal)
+        </button>
+      </div>
+    `;
+    this.openModal('🗺️ Peta 6 Dunia Utama — Sejarah Tingkatan 1', html);
+  },
+
+  openFinalBoss() {
+    const st = GameState.getStudent();
+    const count = GameState.getOverallCompletion(st).completedWorlds;
+    if (count < 6) {
+      this.openModal('🔒 Bos Akhir Masih Terkunci', `
+        <div class="text-center space-y-4 py-3">
+          <div class="text-5xl">🔒</div>
+          <p class="text-slate-200 text-sm">Anda telah melengkapkan <b class="text-cyan-300">${count}/6 Dunia (Kristal Ilmu)</b>. Lengkapkan 100% semua 6 dunia untuk membuka pertarungan <b>Penjaga Sejarah Hilang (30 Soalan)</b>!</p>
+          <div class="flex flex-wrap justify-center gap-2 pt-2">
+            <button onclick="UI.openWorldMap()" class="btn-game btn-sky px-5 py-2.5">🗺️ Teruskan Kumpul Kristal</button>
+            <button onclick="BossBattle.startFinalBoss()" class="btn-game btn-slate px-4 py-2.5 text-xs">👩‍🏫 Mod Pratonton Guru (Buka 30 Soalan)</button>
+          </div>
+        </div>
+      `);
+    } else {
+      this.openModal('👑 BOS AKHIR: PENJAGA SEJARAH HILANG', `
+        <div class="text-center space-y-4 py-3">
+          <div class="text-6xl animate-float">👑</div>
+          <h3 class="text-xl font-bold text-amber-300">Semua 6 Kristal Ilmu Telah Bersatu!</h3>
+          <p class="text-sm text-slate-200">Cabaran Akhir mengandungi <b>30 soalan</b> (5 soalan daripada setiap 6 dunia Sejarah Tingkatan 1). Capai sekurang-kurangnya <b>80% (24/30)</b> untuk bergelar <b>LEGENDARY HISTORY MASTER</b>!</p>
+          <button onclick="BossBattle.startFinalBoss()" class="btn-game btn-gold px-8 py-3 text-lg">⚔️ MULA PERTARUNGAN AKHIR!</button>
+        </div>
+      `);
+    }
+  },
+
+  openInventory() {
+    const st = GameState.getStudent();
+    if (!st) return;
+    const overall = GameState.getOverallCompletion(st);
+    const html = `
+      <div class="space-y-5">
+        <div class="grid grid-cols-3 gap-2.5 text-center">
+          <div class="p-3 rounded-2xl bg-slate-800 border border-white/10"><div class="text-2xl">⭐</div><div class="font-bold text-amber-300">${st.score} Mata</div></div>
+          <div class="p-3 rounded-2xl bg-slate-800 border border-white/10"><div class="text-2xl">🪙</div><div class="font-bold text-yellow-300">${st.coins} Syiling</div></div>
+          <div class="p-3 rounded-2xl bg-slate-800 border border-white/10"><div class="text-2xl">💎</div><div class="font-bold text-cyan-300">${overall.completedWorlds}/6 Kristal (${overall.percentage}%)</div></div>
+        </div>
+
+        <div>
+          <h3 class="font-game text-sm text-amber-300 mb-2">💎 Koleksi 6 Kristal Ilmu Suci</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            ${WORLDS_DATA.map(w => {
+              const comp = GameState.getWorldCompletion(w.id, st);
+              const has = comp.isCompleted;
+              return `
+                <div class="p-2.5 rounded-xl border text-center ${has ? 'bg-cyan-900/40 border-cyan-400' : 'bg-slate-800/60 border-slate-700 opacity-75'}">
+                  <div class="text-2xl">${has ? '💎' : '❔'}</div>
+                  <div class="text-xs font-bold mt-1">${w.crystalName}</div>
+                  <div class="text-[10px] text-slate-300">${w.name} (${comp.percentage}%)</div>
+                  <div class="text-[10px] text-amber-300 mt-0.5">Artefak ${comp.collected}/3 • ${comp.challengeDone ? '✅' : '⏳'} • ${comp.bossDone ? '✅' : '⚔️'}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-game text-sm text-amber-300 mb-2">🏅 Lencana Pencapaian</h3>
+          <div class="flex flex-wrap gap-2">
+            ${st.badges.map(b => `<span class="px-3 py-1.5 rounded-xl bg-indigo-900/70 border border-indigo-400 text-xs font-bold">${b}</span>`).join('')}
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-800/80 border border-amber-400/40 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div class="font-bold text-sm text-amber-300">👑 Naik Taraf Mahkota Lagenda (50 Syiling)</div>
+            <div class="text-xs text-slate-300">Hiasi avatar 3D anda dengan Mahkota Emas bersinar!</div>
+          </div>
+          ${st.avatar.crownUnlocked
+            ? `<span class="text-xs font-bold text-emerald-400">✅ Telah Dimiliki</span>`
+            : `<button onclick="UI.buyCrown()" class="btn-game btn-gold px-4 py-2 text-xs">Beli (50 🪙)</button>`}
+        </div>
+      </div>
+    `;
+    this.openModal(`🎒 Beg Pengembara — ${st.name}`, html);
+  },
+
+  buyCrown() {
+    const st = GameState.getStudent();
+    if (st.coins < 50) { UI.toast('Syiling tidak mencukupi! Kumpul 50 syiling emas dahulu.', 'rose'); return; }
+    st.coins -= 50;
+    st.avatar.crownUnlocked = true;
+    GameState.saveAll();
+    Engine3D.rebuildPlayerAvatar(st.avatar);
+    SoundFX.play('victory');
+    UI.toast('👑 Mahkota Lagenda dipasang pada avatar 3D anda!', 'gold');
+    this.updateHUD();
+    this.openInventory();
+  },
+
+  openPauseMenu() {
+    this.openModal('⚙️ Menu Permainan', `
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button onclick="UI.closeModal()" class="btn-game btn-emerald py-3">▶️ Sambung Main</button>
+        <button onclick="UI.openWorldMap()" class="btn-game btn-sky py-3">🗺️ Peta Dunia</button>
+        <button onclick="UI.returnToCreator()" class="btn-game btn-gold py-3">🎨 Ubah Avatar / Tukar Murid</button>
+        <button onclick="UI.openTeacherPanel()" class="btn-game btn-purple py-3">👩‍🏫 Panel Kawalan Guru</button>
+      </div>
+    `);
+  },
+
+  returnToCreator() {
+    this.closeModal();
+    GameState.inCreator = true;
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('screen-creator').classList.remove('hidden');
+    Engine3D.buildCreatorStage();
+    Creator.refreshSavedProfiles();
+  },
+
+  openVictoryCertificate(name, pct, correct, totalQ = 30) {
+    const dateStr = new Date().toLocaleDateString('ms-MY');
+    this.openModal('🏆 LEGENDARY HISTORY MASTER!', `
+      <div class="space-y-4 text-center">
+        <div id="cert-box" class="p-6 rounded-2xl bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-200 text-slate-900 border-8 border-double border-amber-600 shadow-2xl">
+          <div class="text-4xl mb-1">🏆🏛️👑</div>
+          <div class="font-game text-2xl sm:text-3xl font-bold text-amber-800">SIJIL PENGHARGAAN LAGENDA</div>
+          <div class="text-xs font-bold uppercase tracking-widest text-amber-700 mt-1">MISI SEJARAH: THE LOST CIVILIZATION • SEJARAH TINGKATAN 1 KSSM</div>
+          <p class="text-sm mt-4">Dengan ini diperakui bahawa</p>
+          <div class="font-game text-2xl sm:text-3xl font-bold text-indigo-900 my-1 underline decoration-amber-500">${name}</div>
+          <p class="text-sm">telah berjaya mengumpul kesemua <b>6 Kristal Ilmu</b> dan menewaskan <b>Penjaga Sejarah Hilang</b> dengan pencapaian cemerlang:</p>
+          <div class="inline-block my-3 px-5 py-2 rounded-xl bg-amber-500 text-slate-950 font-game text-xl font-bold">${correct}/${totalQ} (${pct}%) — LEGENDARY HISTORY MASTER!</div>
+          <div class="text-xs text-slate-600 mt-2">Tarikh: ${dateStr} • Kurikulum Standard Sekolah Menengah (KSSM) Sejarah Tingkatan 1</div>
+        </div>
+        <div class="flex flex-wrap justify-center gap-3">
+          <button onclick="window.print()" class="btn-game btn-gold px-5 py-2.5 text-sm">🖨️ Cetak Sijil</button>
+          <button onclick="UI.closeModal(); WorldManager.enterHub();" class="btn-game btn-emerald px-5 py-2.5 text-sm">🏡 Kembali ke Hab</button>
+        </div>
+      </div>
+    `);
+  },
+
+  /* ---------- TEACHER CONTROL PANEL ---------- */
+  openTeacherPanel() {
+    const students = Object.values(GameState.students).sort((a, b) => b.score - a.score);
+
+    // Calculate class average per topic
+    const topicAvgs = WORLDS_DATA.map(w => {
+      let c = 0, t = 0;
+      students.forEach(s => {
+        if (s.topicStats && s.topicStats[w.id]) {
+          c += s.topicStats[w.id].correct;
+          t += s.topicStats[w.id].total;
+        }
+      });
+      return { id: w.id, topic: w.topic, pct: t > 0 ? Math.round((c / t) * 100) : null, total: t };
+    });
+
+    const html = `
+      <div class="space-y-5 text-sm">
+        <!-- Quick Add Student -->
+        <div class="p-3.5 rounded-2xl bg-slate-800/80 border border-white/15 flex flex-wrap gap-2 items-center">
+          <input id="teacher-add-name" type="text" placeholder="Tambah nama murid baharu..." class="flex-1 min-w-[180px] px-3 py-2 rounded-xl bg-slate-900 border border-slate-600 text-white text-sm font-bold outline-none" />
+          <button onclick="Teacher.addStudent()" class="btn-game btn-emerald px-4 py-2 text-xs">➕ Daftar Murid</button>
+          <button onclick="Teacher.exportCSV()" class="btn-game btn-sky px-4 py-2 text-xs">📥 Eksport Skor (CSV)</button>
+          <button onclick="Teacher.confirmResetAll()" class="btn-game btn-rose px-4 py-2 text-xs">🗑️ Reset Semua</button>
+        </div>
+
+        <!-- Class Performance & Weak Topics -->
+        <div>
+          <h3 class="font-game text-amber-300 mb-2">📊 Analisis Penguasaan Mengikut Topik (Kenal Pasti Topik Lemah)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            ${topicAvgs.map(ta => {
+              const barColor = ta.pct === null ? 'bg-slate-600' : ta.pct >= 75 ? 'bg-emerald-500' : ta.pct >= 50 ? 'bg-amber-400' : 'bg-rose-500';
+              return `
+                <div class="p-2.5 rounded-xl bg-slate-800/70 border border-white/10">
+                  <div class="flex justify-between text-xs font-bold mb-1">
+                    <span>${ta.topic}</span>
+                    <span class="${ta.pct !== null && ta.pct < 50 ? 'text-rose-400' : 'text-slate-200'}">${ta.pct === null ? 'Tiada Data' : ta.pct + '%'}</span>
+                  </div>
+                  <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden">
+                    <div class="h-full ${barColor}" style="width:${ta.pct || 0}%"></div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Class Rankings & 6-Mission Tracker -->
+        <div>
+          <h3 class="font-game text-amber-300 mb-2">🏆 Kedudukan Kelas & Pemantauan 6 Dunia Utama (${students.length} Murid)</h3>
+          ${students.length === 0 ? `<div class="p-4 rounded-xl bg-slate-800 text-slate-400 text-center">Belum ada rekod murid. Daftar murid di atas atau mula bermain!</div>` : `
+            <div class="overflow-x-auto rounded-xl border border-white/15">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-800 text-amber-300">
+                  <tr>
+                    <th class="p-2.5">#</th>
+                    <th class="p-2.5">Nama Murid</th>
+                    <th class="p-2.5">Skor</th>
+                    <th class="p-2.5">Kemajuan</th>
+                    <th class="p-2.5">Status 6 Dunia</th>
+                    <th class="p-2.5">Bos Akhir</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/10 bg-slate-900/60">
+                  ${students.map((s, idx) => {
+                    const ov = GameState.getOverallCompletion(s);
+                    return `
+                    <tr>
+                      <td class="p-2.5 font-bold">${idx + 1}</td>
+                      <td class="p-2.5 font-bold text-white">${s.name}</td>
+                      <td class="p-2.5 text-amber-300 font-bold">⭐ ${s.score}</td>
+                      <td class="p-2.5 font-bold text-cyan-300">${ov.percentage}% (${ov.completedWorlds}/6)</td>
+                      <td class="p-2.5">
+                        <div class="flex gap-1">${WORLDS_DATA.map(w => {
+                          const c = GameState.getWorldCompletion(w.id, s);
+                          const cls = c.isCompleted ? 'bg-emerald-500 text-white' : c.percentage > 0 ? 'bg-amber-500/80 text-slate-950' : 'bg-slate-700 text-slate-400';
+                          return `<span title="${w.name}: ${c.percentage}% (Artefak ${c.collected}/3, Cabaran ${c.challengeDone ? 'Ya' : 'Belum'}, Bos ${c.bossDone ? 'Ya' : 'Belum'})" class="w-6 h-5 rounded flex items-center justify-center text-[10px] font-bold ${cls}">${w.id}</span>`;
+                        }).join('')}</div>
+                      </td>
+                      <td class="p-2.5 font-bold ${s.finalBossPassed ? 'text-emerald-400' : 'text-slate-400'}">${s.finalBossBest ? s.finalBossBest + '%' : '-'}</td>
+                    </tr>
+                  `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `}
+        </div>
+      </div>
+    `;
+    this.openModal('👩‍🏫 Panel Kawalan Guru — Sejarah Tingkatan 1 KSSM', html);
+  }
+};
+
+const Teacher = {
+  addStudent() {
+    const inp = document.getElementById('teacher-add-name');
+    const name = inp.value.trim();
+    if (!name) return;
+    GameState.createOrSelectStudent(name, DefaultAvatar);
+    Creator.refreshSavedProfiles();
+    UI.toast(`Murid "${name}" berjaya didaftarkan!`, 'emerald');
+    UI.openTeacherPanel();
+  },
+
+  exportCSV() {
+    const students = Object.values(GameState.students);
+    if (students.length === 0) { UI.toast('Tiada data murid untuk dieksport.', 'rose'); return; }
+    let csv = 'Nama Murid,Skor,Syiling,Kemajuan Keseluruhan (%),Dunia Selesai (6 Dunia),Skor Bos Akhir (%)\n';
+    students.forEach(s => {
+      const ov = GameState.getOverallCompletion(s);
+      csv += `"${s.name}",${s.score},${s.coins},${ov.percentage},${ov.completedWorlds},${s.finalBossBest || 0}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'skor_misi_sejarah_tingkatan1.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    UI.toast('Fail CSV skor murid telah dimuat turun!', 'emerald');
+  },
+
+  confirmResetAll() {
+    UI.openModal('⚠️ Sahkan Reset Semua Data?', `
+      <div class="text-center space-y-4 py-3">
+        <p class="text-slate-200 text-sm">Adakah cikgu pasti mahu memadam semua rekod kemajuan dan skor murid?</p>
+        <div class="flex justify-center gap-3">
+          <button onclick="Teacher.doResetAll()" class="btn-game btn-rose px-6 py-2.5">Ya, Padam Semua</button>
+          <button onclick="UI.openTeacherPanel()" class="btn-game btn-slate px-6 py-2.5">Batal</button>
+        </div>
+      </div>
+    `);
+  },
+
+  doResetAll() {
+    GameState.students = {};
+    GameState.saveAll();
+    Creator.refreshSavedProfiles();
+    UI.toast('Semua kemajuan murid telah direset.', 'gold');
+    UI.openTeacherPanel();
+  }
+};
+
+/* ============================================================================
+ * 11. CONFETTI CELEBRATION SYSTEM
+ * ============================================================================ */
+const Confetti = {
+  particles: [],
+  running: false,
+  burst() {
+    const canvas = document.getElementById('confetti-canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const colors = ['#facc15', '#38bdf8', '#34d399', '#fb7185', '#c084fc', '#ffffff'];
+    for (let i = 0; i < 90; i++) {
+      this.particles.push({
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: (Math.random() - 0.5) * 16,
+        vy: (Math.random() - 0.8) * 16,
+        size: 6 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 110
+      });
+    }
+    if (!this.running) this.loop();
+  },
+  loop() {
+    this.running = true;
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    this.particles = this.particles.filter(p => p.life > 0);
+    for (const p of this.particles) {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.35; p.life--;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.size, p.size * 0.6);
+    }
+    if (this.particles.length > 0) requestAnimationFrame(() => this.loop());
+    else this.running = false;
+  }
+};
+
+/* ============================================================================
+ * 12. BOOTSTRAP ON WINDOW LOAD
+ * ============================================================================ */
+window.onload = function () {
+  GameState.loadAll();
+  Engine3D.init();
+  Creator.init();
+};
+</script>
+</body>
+</html>
